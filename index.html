@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611082243"><meta name="theme-color" content="#050B16">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611082342"><meta name="theme-color" content="#050B16">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="sb.js"></script></head><body>
@@ -127,7 +127,14 @@ textarea{min-height:58px;resize:vertical}
 #map .spark{fill:#E6F4FF;filter:drop-shadow(0 0 3px #3FD4FF)}#map .spark[data-who=gov]{filter:drop-shadow(0 0 3px #B57BFF)}#map .spark[data-who=own]{filter:drop-shadow(0 0 3px #FFD27A)}
 #map .lbg{fill:#050B16;stroke:#3FD4FF;stroke-width:1}#map .lbg[data-who=gov]{stroke:#B57BFF}#map .lbg[data-who=own]{stroke:#FFD27A}
 #map .lnum{font:600 8.5px var(--mono);fill:#E6F4FF;stroke:none}
-#map .lnk{animation:lflash 4.8s ease-in-out infinite}@keyframes lflash{0%,100%{opacity:.55}50%{opacity:1}}
+#map .lnum{font-size:10px}
+#map .spark{opacity:0;offset-distance:0%}
+#map .spark.lit{opacity:1;animation:travel .7s linear forwards}@keyframes travel{from{offset-distance:0%}to{offset-distance:100%}}
+#map .lnk.lit .lbg{fill:#3FD4FF}#map .lnk.lit .lbg[data-who=gov]{fill:#B57BFF}#map .lnk.lit .lbg[data-who=own]{fill:#FFD27A}#map .lnk.lit .lnum{fill:#050B16}
+.hex.lit .glow{opacity:.75!important}.hex.lit .body{stroke-width:3.2}.hex.lit .ring{stroke:#FFFFFF;opacity:1}
+.flow{display:grid;gap:3px;font-size:13px}.flow b{font:600 12px var(--mono)}
+.taWrap{position:relative}.taWrap textarea{display:block;padding-right:26px;resize:none}
+.grip{position:absolute;right:2px;bottom:2px;width:24px;height:24px;cursor:ns-resize;touch-action:none;background:linear-gradient(135deg,transparent 45%,#3FD4FF 45%,#3FD4FF 52%,transparent 52%,transparent 62%,#3FD4FF 62%,#3FD4FF 69%,transparent 69%,transparent 79%,#3FD4FF 79%,#3FD4FF 86%,transparent 86%)}
 #map .hnum{font:700 9px var(--mono);fill:#9FEBFF;stroke:none}
 @media (prefers-reduced-motion:reduce){#map .lnk{animation:none}#map .spark{display:none}}
 </style>
@@ -146,7 +153,7 @@ textarea{min-height:58px;resize:vertical}
 <circle cx="128" cy="150" r="17" fill="#3FD4FF"/>
 <path d="M128 140a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0v-7a4 4 0 0 1 4-4zm-8 10a8 8 0 0 0 16 0M128 158v4" fill="none" stroke="#050B16" stroke-width="2.2" stroke-linecap="round"/>
 </g></svg><span>Supervisor of supercluster mutations</span><span class="small" id="spkMsg" role="status" style="color:#9FEBFF">Tap a face to open the nodes. Tap the mic and say a node's name.</span></div>
-<section class="chat" id="chat" aria-label="Edit or ask the supervisor"><button type="button" id="acTog" class="acTog" aria-expanded="false" aria-controls="cBody"><span>Ask or change</span><span id="acArrow" aria-hidden="true">▾</span></button><div id="cBody" hidden style="display:grid;gap:8px"><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><div class="row"><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></div></section>
+<section class="chat" id="chat" aria-label="Edit or ask the supervisor"><button type="button" id="acTog" class="acTog" aria-expanded="false" aria-controls="cBody"><span>Ask or change</span><span id="acArrow" aria-hidden="true">▾</span></button><div id="cBody" hidden style="display:grid;gap:8px"><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><div class="taWrap"><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><span class="grip" id="cGrip" role="separator" aria-label="Drag to resize the message box" aria-orientation="horizontal" tabindex="0"></span></div><div class="row"><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></div></section>
 <div class="brain" id="net" hidden>
 <section aria-label="Connected map">
 <svg id="map" class="net" role="group" aria-label="Linked nodes of roles and readings"></svg>
@@ -205,24 +212,44 @@ function renderNames(){const g=graph(),box=$('nameList');if(!box)return;const by
  ['sup','gov','own'].forEach(w=>{if(!by[w].length)return;h+=`<div class="grp">${GRP[w]}</div><ul>`+by[w].map(n=>`<li><button type="button" data-name="${esc(n.id)}" data-sel="${sel===n.id?'y':'n'}" style="--c:${COL[w]};animation-delay:${((i++)*0.9)%6}s"><b style="font:500 11px var(--mono);min-width:16px">${NUM[n.id]||''}</b>${esc(n.title)}</button></li>`).join('')+'</ul>';});
  box.innerHTML=h;box.querySelectorAll('[data-name]').forEach(b=>b.addEventListener('click',()=>{const n=g.find(x=>x.id===b.dataset.name);showNet(true);sel=n.id;editing=n.kind==='role';renderMap();renderNote();if(innerWidth<=900){$('names').classList.remove('open');$('namesTab').setAttribute('aria-expanded','false');}$('note').scrollIntoView({behavior:'smooth',block:'start'});}));}
 $('namesTab').addEventListener('click',()=>{const o=$('names').classList.toggle('open');$('namesTab').setAttribute('aria-expanded',String(o));});
+
+function flowHtml(n,g){const fed=g.filter(x=>x.id===n.parent),fires=g.filter(x=>x.parent===n.id);if(!fed.length&&!fires.length)return '';
+ const row=(x,l)=>`<span><b>${l}</b> ${esc(x.title)}</span>`;
+ return `<div class="flow"><span class="tag">Signal path (node ${NUM[n.id]})</span>${fed.map(x=>row(x,NUM[x.id]+'→'+NUM[n.id]+' fed by')).join('')}${fires.map(x=>row(x,NUM[n.id]+'→'+NUM[x.id]+' fires into')).join('')}</div>`;}
+let igT=[];function ignite(start){igT.forEach(clearTimeout);igT=[];const svg=$('map');if(!svg)return;const g=graph();
+ svg.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit'));let lvl=[start],seen=new Set([start]),k=0;
+ const fire=(ids,d)=>igT.push(setTimeout(()=>ids.forEach(id=>{const h=svg.querySelector(`.hex[data-id="${CSS.escape(id)}"]`);if(h)h.classList.add('lit');
+   svg.querySelectorAll(`[data-to="${CSS.escape(id)}"]`).forEach(e=>{e.classList.remove('lit');void e.getBBox();e.classList.add('lit');});}),d));
+ fire([start],0);
+ while(lvl.length&&k<8){k++;const nx=[];lvl.forEach(p=>g.filter(x=>x.parent===p&&!seen.has(x.id)).forEach(x=>{seen.add(x.id);nx.push(x.id);}));if(nx.length)fire(nx,k*900);lvl=nx;}
+ igT.push(setTimeout(()=>svg.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit')),k*900+2200));}
+setInterval(()=>{if(!$('net').hidden&&!editing&&!document.hidden)ignite('root');},12000);
+(function(){const gr=$('cGrip'),ta=$('cText');let drag=false,y0=0,h0=0;
+ const Y=e=>e.touches?e.touches[0].clientY:e.clientY;
+ const start=e=>{e.preventDefault();drag=true;y0=Y(e);h0=ta.offsetHeight;};
+ const move=e=>{if(!drag)return;e.preventDefault();ta.style.height=Math.max(44,Math.min(window.innerHeight*0.7,h0+Y(e)-y0))+'px';};
+ const end=()=>{drag=false;};
+ gr.addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);
+ gr.addEventListener('touchstart',start,{passive:false});window.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',end);
+ gr.addEventListener('keydown',e=>{if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();ta.style.height=Math.max(44,ta.offsetHeight+(e.key==='ArrowDown'?20:-20))+'px';}});})();
 let NUM={};const numberAll=g=>{NUM={};[...g].sort((x,y)=>(x.createdAt||0)-(y.createdAt||0)).forEach((n,i)=>NUM[n.id]=i+1);};
 function renderMap(){numberAll(graph());renderNames();const svg=$('map'),g=graph();$('mapEmpty').hidden=g.length>0;if(!g.length){svg.innerHTML='';return;}
  const pos=place(g);let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;g.forEach(n=>{if(!pos[n.id])return;const[x,y]=xy(...pos[n.id]);x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);});
  if(x0>x1){svg.innerHTML='';$('mapEmpty').hidden=false;return;}const m=R+4;svg.setAttribute('viewBox',`${x0-m} ${y0-m} ${x1-x0+2*m} ${y1-y0+2*m}`);const who={};g.forEach(n=>who[n.id]=whoOf(g,n));
  let bands='',also='',hex='';
  g.forEach(n=>{(n.links||[]).forEach(id=>{if(!pos[id]||!pos[n.id])return;const a=xy(...pos[n.id]),b=xy(...pos[id]);also+=`<line class="also" data-on="${sel===n.id||sel===id?'y':'n'}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;});
-  if(!n.parent||!pos[n.parent]||!pos[n.id])return;const a=xy(...pos[n.id]),b=xy(...pos[n.parent]);const w=who[n.id],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;bands+=`<line class="band" data-keep="${n.kind==='link'?'y':'n'}" data-who="${w}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/><circle class="spark" data-who="${w}" r="2.6"><animateMotion dur="${3.5+(NUM[n.id]%4)*0.6}s" repeatCount="indefinite" path="M${b[0]},${b[1]} L${a[0]},${a[1]}"/></circle>${(()=>{const lb=NUM[n.parent]+'→'+NUM[n.id],wd=lb.length*5.6+8;return `<g class="lnk" style="animation-delay:${(NUM[n.id]%6)*0.8}s"><rect class="lbg" data-who="${w}" x="${mx-wd/2}" y="${my-7}" width="${wd}" height="14" rx="7"/><text class="lnum" x="${mx}" y="${my+3.5}" text-anchor="middle">${lb}</text></g>`;})()}`;});
+  if(!n.parent||!pos[n.parent]||!pos[n.id])return;const a=xy(...pos[n.id]),b=xy(...pos[n.parent]);const w=who[n.id],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;bands+=`<line class="band" data-keep="${n.kind==='link'?'y':'n'}" data-who="${w}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/><circle class="spark" data-to="${esc(n.id)}" data-who="${w}" r="3" cx="0" cy="0" style="offset-path:path('M${b[0]},${b[1]} L${a[0]},${a[1]}')"/>${(()=>{const lb=NUM[n.parent]+'→'+NUM[n.id],wd=lb.length*6.6+10;return `<g class="lnk" data-to="${esc(n.id)}"><rect class="lbg" data-who="${w}" x="${mx-wd/2}" y="${my-8}" width="${wd}" height="16" rx="8"/><text class="lnum" x="${mx}" y="${my+3.5}" text-anchor="middle">${lb}</text></g>`;})()}`;});
  g.forEach(n=>{if(!pos[n.id])return;const[x,y]=xy(...pos[n.id]),ls=wrap(n.title,11,3);let t='';ls.forEach((l,i)=>{t+=`<text x="${x}" y="${y+4+(i-(ls.length-1)/2)*13}" text-anchor="middle">${esc(l)}</text>`;});
   hex+=`<g class="hex" tabindex="0" role="button" data-id="${esc(n.id)}" data-kind="${n.kind}" data-who="${who[n.id]}" data-tone="${esc(n.tone)}" data-outer="${n.outer?'y':'n'}" data-sel="${sel===n.id?'y':'n'}" aria-label="${esc(n.title)}"><circle class="glow" cx="${x}" cy="${y}" r="${R}"/><circle class="halo" cx="${x}" cy="${y}" r="${R}"/><circle class="body" cx="${x}" cy="${y}" r="${R-7}"/><circle class="ring" cx="${x}" cy="${y}" r="${R-11}"/><text class="hnum" x="${x}" y="${y-R+19}" text-anchor="middle">${NUM[n.id]}</text>${t}</g>`;});
  svg.innerHTML='<defs><filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter><filter id="soft"><feGaussianBlur stdDeviation="1"/></filter></defs>'+also+bands+hex;
- svg.querySelectorAll('.hex').forEach(h=>{const go=()=>open(h.dataset.id);h.addEventListener('click',go);h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});});}
+ svg.querySelectorAll('.hex').forEach(h=>{const go=()=>{open(h.dataset.id);ignite(h.dataset.id);};h.addEventListener('click',go);h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});});}
 function open(id){sel=id;editing=false;renderMap();renderNote();}
 function renderNote(){const g=graph(),n=g.find(x=>x.id===sel),box=$('note');if(!n){box.innerHTML='<span class="small">Select a node to open its note.</span>';return;}
  box.dataset.tone=n.tone;
  const fam=[g.find(x=>x.id===n.parent)].concat(g.filter(x=>x.parent===n.id)).filter(Boolean),also=(n.links||[]).map(i=>g.find(x=>x.id===i)).concat(g.filter(x=>(x.links||[]).includes(n.id))).filter(Boolean);
  const chip=(x,c)=>`<button type="button" class="chip ${c}" data-go="${esc(x.id)}">${esc(x.title)}</button>`;
  const kindText=n.kind==='reading'?'Reading':n.kind==='link'?'Keeps the supervisor active':n.outer?'Connected, not the supervisor\'s work':n.id==='root'?'Center':'Role';
- let h=`<div><span class="kind">${esc(kindText)}</span><h2>${esc(n.title)}</h2></div><div><span class="tag">Now</span>${esc(n.now||'Not set')}</div><div><span class="tag">What it means</span>${esc(n.means||'Not set')}</div><div><span class="tag">Strong looks like</span><span class="goal">${esc(n.strong||'Not set')}</span></div><div><span class="tag">Connected to</span><div class="chips">${fam.map(x=>chip(x,'')).join('')}${also.map(x=>chip(x,'plain')).join('')}</div></div>`;
+ let h=`<div><span class="kind">${esc(kindText)}</span><h2>${esc(n.title)}</h2></div><div><span class="tag">Now</span>${esc(n.now||'Not set')}</div><div><span class="tag">What it means</span>${esc(n.means||'Not set')}</div><div><span class="tag">Strong looks like</span><span class="goal">${esc(n.strong||'Not set')}</span></div>${flowHtml(n,g)}<div><span class="tag">Connected to</span><div class="chips">${fam.map(x=>chip(x,'')).join('')}${also.map(x=>chip(x,'plain')).join('')}</div></div>`;
  if(n.kind==='role')h+=editing?editorHtml(nodes.find(x=>x.id===n.id)):`<div class="row"><button class="btn" type="button" id="bEdit">Edit or ask</button></div>`;
  box.innerHTML=h;box.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>open(b.dataset.go)));
  const be=$('bEdit');if(be)be.addEventListener('click',()=>{editing=true;renderNote();});if(editing&&n.kind==='role')wireEditor(n.id);}
@@ -257,7 +284,7 @@ function renderLive(){if(!live)return;renderBeat();
  renderMap();if(!editing)renderNote();}
 function renderLog(){const l=[...logs].sort((a,b)=>String(b.at).localeCompare(String(a.at)));$('log').innerHTML=l.map(x=>`<div><span class="mono">${esc(x.at)}</span><span class="mono">${esc(x.main)}</span><span>${esc(x.task||x.text)}${x.change?': '+esc(x.change):''}</span></div>`).join('')||'<span class="small">No transactions logged yet.</span>';}
 function renderReports(){const l=[...reports].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,8);$('cHist').innerHTML=l.map(r=>`<div><span><b style="font-weight:500;color:#3FD4FF">${esc({intraday:'Intraday',trigger:'Trigger/1SD',map:'Map'}[r.lane]||'General')}</b> · ${esc(r.text)}</span><span class="small">${r.fix?'Supervisor: '+esc(r.fix):'Waiting for the supervisor'}</span></div>`).join('');}
-const showNet=open=>{const n=$('net');n.hidden=!open;$('bPyr').setAttribute('aria-expanded',String(open));if(open){renderMap();renderNote();}};
+const showNet=open=>{const n=$('net');const was=n.hidden;n.hidden=!open;$('bPyr').setAttribute('aria-expanded',String(open));if(open){renderMap();renderNote();if(was)setTimeout(()=>ignite('root'),400);}};
 const act=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});};
 act($('bPyr'),()=>showNet($('net').hidden));
 const norm=t=>String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
