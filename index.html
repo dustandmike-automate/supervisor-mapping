@@ -107,7 +107,21 @@ textarea{min-height:58px;resize:vertical}
 .msg{font-size:13px;color:var(--mute)}.msg.err{color:var(--bad)}
 .q{border-top:1px solid var(--line);padding-top:6px;display:grid;gap:2px;font-size:14px}
 .q .a{white-space:pre-wrap}
+
+.names{position:fixed;top:0;right:0;bottom:0;width:180px;padding:calc(14px + env(safe-area-inset-top,0px)) 10px 14px;background:rgba(5,11,22,.94);border-left:1px solid #3FD4FF44;overflow:auto;z-index:20;transition:transform .3s}
+.names h3{color:#E6F4FF;font-size:14px;margin:0 0 8px}
+.names ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.names .grp{font-size:11px;color:#A6B2BE;margin-top:8px;text-transform:uppercase;letter-spacing:.06em}
+.names button{display:flex;align-items:center;gap:7px;width:100%;text-align:left;background:none;border:0;padding:4px 2px;font:500 13px/1.25 var(--display);color:var(--c);cursor:pointer;animation:twinkle 6s ease-in-out infinite}
+.names button::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
+.names button[data-sel=y]{outline:1px solid var(--c);outline-offset:1px;animation:none;opacity:1}
+@keyframes twinkle{0%,100%{opacity:.45;text-shadow:none}50%{opacity:1;text-shadow:0 0 10px var(--c)}}
+@media (prefers-reduced-motion:reduce){.names button{animation:none;opacity:1}}
+.namesTab{display:none;position:fixed;right:0;top:45%;z-index:21;writing-mode:vertical-rl;background:#071628;color:#3FD4FF;border:1px solid #3FD4FF;border-right:0;padding:10px 5px;font:700 12px var(--display);cursor:pointer}
+@media (min-width:901px){body{padding-right:196px}}
+@media (max-width:900px){.names{transform:translateX(100%)}.names.open{transform:none}.namesTab{display:block}.names.open+.namesTab{right:180px}}
 </style>
+<aside class="names" id="names" aria-label="All node names"><h3>Names</h3><div id="nameList"></div></aside><button class="namesTab" id="namesTab" type="button" aria-controls="names" aria-expanded="false">Names</button>
 <main>
 <div class="pyr" id="pyrWrap"><svg viewBox="0 0 270 240" role="group" aria-label="Supervisor tetrahedron">
 <g id="bPyr" role="button" tabindex="0" aria-expanded="false" aria-controls="net" aria-label="Open the node network" style="cursor:pointer">
@@ -176,7 +190,12 @@ function place(g){const pos={},used={};g.filter(n=>Array.isArray(n.slot)).forEac
  return pos;}
 const whoOf=(g,n)=>{for(let x=n,i=0;x&&i<9;i++){if(x.id==='governor'||x.id==='routine')return 'gov';if(x.id==='owner')return 'own';if(x.id==='root')return 'sup';x=g.find(y=>y.id===x.parent);}return 'sup';};
 function wrap(t,max,lim){const out=[];let l='';String(t||'').split(/\s+/).forEach(w=>{if((l+' '+w).trim().length>max){if(l)out.push(l);l=w;}else l=(l+' '+w).trim();});if(l)out.push(l);return out.slice(0,lim);}
-function renderMap(){const svg=$('map'),g=graph();$('mapEmpty').hidden=g.length>0;if(!g.length){svg.innerHTML='';return;}
+const COL={sup:'#3FD4FF',gov:'#B57BFF',own:'#FFD27A'},GRP={sup:'Supervisor',gov:'Governor',own:'Owner'};
+function renderNames(){const g=graph(),box=$('nameList');if(!box)return;const by={sup:[],gov:[],own:[]};g.forEach(n=>by[whoOf(g,n)].push(n));let i=0,h='';
+ ['sup','gov','own'].forEach(w=>{if(!by[w].length)return;h+=`<div class="grp">${GRP[w]}</div><ul>`+by[w].map(n=>`<li><button type="button" data-name="${esc(n.id)}" data-sel="${sel===n.id?'y':'n'}" style="--c:${COL[w]};animation-delay:${((i++)*0.9)%6}s">${esc(n.title)}</button></li>`).join('')+'</ul>';});
+ box.innerHTML=h;box.querySelectorAll('[data-name]').forEach(b=>b.addEventListener('click',()=>{const n=g.find(x=>x.id===b.dataset.name);showNet(true);sel=n.id;editing=n.kind==='role';renderMap();renderNote();if(innerWidth<=900){$('names').classList.remove('open');$('namesTab').setAttribute('aria-expanded','false');}$('note').scrollIntoView({behavior:'smooth',block:'start'});}));}
+$('namesTab').addEventListener('click',()=>{const o=$('names').classList.toggle('open');$('namesTab').setAttribute('aria-expanded',String(o));});
+function renderMap(){renderNames();const svg=$('map'),g=graph();$('mapEmpty').hidden=g.length>0;if(!g.length){svg.innerHTML='';return;}
  const pos=place(g);let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;g.forEach(n=>{if(!pos[n.id])return;const[x,y]=xy(...pos[n.id]);x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);});
  if(x0>x1){svg.innerHTML='';$('mapEmpty').hidden=false;return;}const m=R+4;svg.setAttribute('viewBox',`${x0-m} ${y0-m} ${x1-x0+2*m} ${y1-y0+2*m}`);const who={};g.forEach(n=>who[n.id]=whoOf(g,n));
  let bands='',also='',hex='';
