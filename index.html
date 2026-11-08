@@ -116,11 +116,11 @@ textarea{min-height:58px;resize:vertical}
 <line x1="22" y1="188" x2="252" y2="176" stroke="#3FD4FF" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45"/>
 <line x1="135" y1="12" x2="150" y2="228" stroke="#9FEBFF" stroke-width="2.5"/>
 </g>
-<g id="bSpeak" role="button" tabindex="0" aria-label="Speak a node name" style="cursor:pointer">
+<g id="bSpeak" transform="translate(-88 -110)" role="button" tabindex="0" aria-label="Speak a node name" style="cursor:pointer">
 <circle id="spkHalo" cx="128" cy="150" r="26" fill="#3FD4FF" opacity=".18"/>
 <circle cx="128" cy="150" r="17" fill="#3FD4FF"/>
 <path d="M128 140a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0v-7a4 4 0 0 1 4-4zm-8 10a8 8 0 0 0 16 0M128 158v4" fill="none" stroke="#050B16" stroke-width="2.2" stroke-linecap="round"/>
-</g></svg><span>Supervisor of supercluster mutations</span><span class="small" id="spkMsg" role="status" style="color:#9FEBFF">Tap a face to open the nodes. Tap the center and say a node's name.</span></div>
+</g></svg><span>Supervisor of supercluster mutations</span><span class="small" id="spkMsg" role="status" style="color:#9FEBFF">Tap a face to open the nodes. Tap the mic and say a node's name.</span></div>
 <section class="chat" id="chat" aria-label="Edit or ask the supervisor"><h3 style="color:#3FD4FF">Ask or change</h3><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><div class="row"><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></section>
 <div class="brain" id="net" hidden>
 <section aria-label="Connected map">
