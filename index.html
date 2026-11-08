@@ -116,6 +116,7 @@ textarea{min-height:58px;resize:vertical}
 <line x1="22" y1="188" x2="252" y2="176" stroke="#3FD4FF" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45"/>
 <line x1="135" y1="12" x2="150" y2="228" stroke="#9FEBFF" stroke-width="2.5"/>
 </g>
+<g id="hb" aria-live="polite" pointer-events="none"><circle id="hbGlow" cx="190" cy="132" r="13" fill="#4BE39B" opacity=".25"/><circle id="hbDot" cx="190" cy="132" r="6.5" fill="#4BE39B"/><text id="hbTime" x="190" y="156" text-anchor="middle" font-size="11" fill="#E6F4FF" font-family="var(--mono)">--:-- ET</text></g>
 <g id="bSpeak" transform="translate(-88 -110)" role="button" tabindex="0" aria-label="Speak a node name" style="cursor:pointer">
 <circle id="spkHalo" cx="128" cy="150" r="26" fill="#3FD4FF" opacity=".18"/>
 <circle cx="128" cy="150" r="17" fill="#3FD4FF"/>
@@ -216,8 +217,13 @@ function wireEditor(id){renderQs();
   if($('bAsk'))$('bAsk').disabled=false;});}
 const bars=rows=>{const m=Math.max(...rows.map(r=>r.v),1);return `<div class="bars">${rows.map(r=>`<div class="bar" data-tone="${esc(r.tone||'')}"><span>${esc(r.label)}</span><div class="t"><div class="bv" style="width:${Math.max(0,r.v/m*100)}%"></div></div><span class="n">${esc(r.show||r.v.toLocaleString('en-US'))}</span></div>`).join('')}</div>`;};
 const cells=series=>`<div class="cells" role="img" aria-label="${esc(series.map(s=>s.n+' '+s.label).join(', '))}">${series.map(s=>Array(s.n).fill(`<span class="cell ${esc(s.kind)}"></span>`).join('')).join('')}</div><div class="key">${series.map(s=>`<span>${s.n} ${esc(s.label)}</span>`).join('')}</div>`;
-function renderLive(){if(!live)return;
- $('charts').innerHTML=(live.readings||[]).map(r=>{let c='';if(r.viz==='cells')c=cells(r.series||[]);if(r.viz==='bars')c=bars(r.rows||[]);return `<article class="chart"><h3>${esc(r.title)}</h3><p class="small">${esc(r.now)}</p>${c}</article>`;}).join('');
+const ET=t=>{const d=new Date(t);return isNaN(d)?'--:--':d.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'});};
+const stale=t=>{const d=new Date(t);return isNaN(d)||Date.now()-d>4*3600e3;};
+function renderBeat(){if(!live)return;const c={clear:'#4BE39B',wait:'#FFC24D',fault:'#FF6B5E'}[live.health]||'#FFC24D';
+ $('hbDot').setAttribute('fill',c);$('hbGlow').setAttribute('fill',c);const t=live.updated||live.read_at;$('hbTime').textContent=ET(t)+' ET';
+ $('hb').setAttribute('aria-label','Health '+(live.health||'unknown')+', updated '+ET(t)+' ET');}
+function renderLive(){if(!live)return;renderBeat();
+ $('charts').innerHTML=(live.readings||[]).map(r=>{let c='';if(r.viz==='cells')c=cells(r.series||[]);if(r.viz==='bars')c=bars(r.rows||[]);const t=r.read_at||live.read_at,old=stale(t);return `<article class="chart"><h3>${esc(r.title)}</h3><p class="small" style="color:${old?'var(--wait)':'var(--good)'}">${old?'Stale · ':''}read ${esc(ET(t))} ET</p><p class="small">${esc(r.now)}</p>${c}</article>`;}).join('');
  renderMap();if(!editing)renderNote();}
 function renderLog(){const l=[...logs].sort((a,b)=>String(b.at).localeCompare(String(a.at)));$('log').innerHTML=l.map(x=>`<div><span class="mono">${esc(x.at)}</span><span class="mono">${esc(x.main)}</span><span>${esc(x.task||x.text)}${x.change?': '+esc(x.change):''}</span></div>`).join('')||'<span class="small">No transactions logged yet.</span>';}
 function renderReports(){const l=[...reports].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,8);$('cHist').innerHTML=l.map(r=>`<div><span><b style="font-weight:500;color:#3FD4FF">${esc({intraday:'Intraday',trigger:'Trigger/1SD',map:'Map'}[r.lane]||'General')}</b> · ${esc(r.text)}</span><span class="small">${r.fix?'Supervisor: '+esc(r.fix):'Waiting for the supervisor'}</span></div>`).join('');}
@@ -225,18 +231,21 @@ const showNet=open=>{const n=$('net');n.hidden=!open;$('bPyr').setAttribute('ari
 const act=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});};
 act($('bPyr'),()=>showNet($('net').hidden));
 const norm=t=>String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
-function callNode(heard){const h=norm(heard);if(!h)return;const g=graph();let best=null,bs=0;
+const LANES=[[/^(ask )?(the )?governor\b/,'intraday','the governor (Intraday)'],[/^(ask )?(the )?intraday\b/,'intraday','the governor (Intraday)'],[/^(ask )?trigger\b/,'trigger','Trigger/1SD'],[/^(ask )?(the )?map\b/,'map','the map']];
+function callNode(heard){const h=norm(heard);if(!h)return;
+ for(const [re,lane,name] of LANES){const m=h.match(re);if(m){const rest=String(heard).trim().split(/\s+/).slice(m[0].split(' ').length).join(' ');$('cLane').value=lane;$('cText').value=rest;$('cText').focus();$('chat').scrollIntoView({behavior:'smooth',block:'center'});say('spkMsg','Ready for '+name+'. Check the words, then tap Send.');return;}}const g=graph();let best=null,bs=0;
  g.forEach(n=>{const t=norm(n.title);if(!t)return;let sc=0;if(h===t)sc=100;else if(h.includes(t)||t.includes(h))sc=50+t.length;else{const hw=new Set(h.split(' '));sc=t.split(' ').filter(w=>w.length>2&&hw.has(w)).length*10;}if(sc>bs){bs=sc;best=n;}});
  if(!best||bs<10){say('spkMsg','Heard "'+heard+'". No node by that name.',true);return;}
  showNet(true);sel=best.id;editing=best.kind==='role';renderMap();renderNote();say('spkMsg','Opened '+best.title+(editing?', ready to edit.':'.'));
  const box=$('note');box.scrollIntoView({behavior:'smooth',block:'start'});const f=box.querySelector('#fNow,#fTitle');if(f)setTimeout(()=>f.focus(),300);}
-act($('bSpeak'),()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let typeNext=false;
+act($('bSpeak'),()=>{const SR=typeNext?null:(window.SpeechRecognition||window.webkitSpeechRecognition);
  if(!SR){const t=prompt('Say or type a node name');if(t)callNode(t);return;}
  const r=new SR();r.lang='en-US';r.interimResults=false;r.maxAlternatives=3;$('bSpeak').classList.add('on');say('spkMsg','Listening…');
  r.onresult=e=>{const alts=[...e.results[0]].map(a=>a.transcript);callNode(alts[0]);};
- r.onerror=e=>say('spkMsg','Voice not available ('+e.error+'). Tap again to type.',true);
+ r.onerror=e=>{typeNext=true;say('spkMsg','Voice not available ('+e.error+'). Tap the mic again to type.',true);};
  r.onend=()=>$('bSpeak').classList.remove('on');r.start();});
-renderMap();renderNote();
+renderMap();renderNote();setInterval(()=>{if(live)renderLive();},60000);
 $('cSend').addEventListener('click',async()=>{const t=$('cText').value.trim();if(!t){say('cMsg','Type the response first.',true);return;}if(!db){say('cMsg','Sign in to send.',true);return;}
  $('cSend').disabled=true;try{await db.doc('reports/r'+Date.now().toString(36)).set({text:t,lane:$('cLane').value,at:Date.now(),fix:''});$('cText').value='';say('cMsg','Sent. Answered on the next wake (within about 4 hours).');}catch(e){say('cMsg','Not sent: '+(e.message||e.code),true);}$('cSend').disabled=false;});
 (async()=>{
