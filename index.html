@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611081958"><meta name="theme-color" content="#050B16">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611082243"><meta name="theme-color" content="#050B16">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="sb.js"></script></head><body>
@@ -123,6 +123,13 @@ textarea{min-height:58px;resize:vertical}
 .namesTab{display:none;position:fixed;right:0;top:45%;z-index:21;writing-mode:vertical-rl;background:#071628;color:#3FD4FF;border:1px solid #3FD4FF;border-right:0;padding:10px 5px;font:700 12px var(--display);cursor:pointer}
 @media (min-width:901px){body{padding-right:196px}}
 @media (max-width:900px){.names{transform:translateX(100%)}.names.open{transform:none}.namesTab{display:block}.names.open+.namesTab{right:180px}}
+
+#map .spark{fill:#E6F4FF;filter:drop-shadow(0 0 3px #3FD4FF)}#map .spark[data-who=gov]{filter:drop-shadow(0 0 3px #B57BFF)}#map .spark[data-who=own]{filter:drop-shadow(0 0 3px #FFD27A)}
+#map .lbg{fill:#050B16;stroke:#3FD4FF;stroke-width:1}#map .lbg[data-who=gov]{stroke:#B57BFF}#map .lbg[data-who=own]{stroke:#FFD27A}
+#map .lnum{font:600 8.5px var(--mono);fill:#E6F4FF;stroke:none}
+#map .lnk{animation:lflash 4.8s ease-in-out infinite}@keyframes lflash{0%,100%{opacity:.55}50%{opacity:1}}
+#map .hnum{font:700 9px var(--mono);fill:#9FEBFF;stroke:none}
+@media (prefers-reduced-motion:reduce){#map .lnk{animation:none}#map .spark{display:none}}
 </style>
 <aside class="names" id="names" aria-label="All node names"><h3>Names</h3><div id="nameList"></div></aside><button class="namesTab" id="namesTab" type="button" aria-controls="names" aria-expanded="false">Names</button>
 <main>
@@ -195,17 +202,18 @@ const whoOf=(g,n)=>{for(let x=n,i=0;x&&i<9;i++){if(x.id==='governor'||x.id==='ro
 function wrap(t,max,lim){const out=[];let l='';String(t||'').split(/\s+/).forEach(w=>{if((l+' '+w).trim().length>max){if(l)out.push(l);l=w;}else l=(l+' '+w).trim();});if(l)out.push(l);return out.slice(0,lim);}
 const COL={sup:'#3FD4FF',gov:'#B57BFF',own:'#FFD27A'},GRP={sup:'Supervisor',gov:'Governor',own:'Owner'};
 function renderNames(){const g=graph(),box=$('nameList');if(!box)return;const by={sup:[],gov:[],own:[]};g.forEach(n=>by[whoOf(g,n)].push(n));let i=0,h='';
- ['sup','gov','own'].forEach(w=>{if(!by[w].length)return;h+=`<div class="grp">${GRP[w]}</div><ul>`+by[w].map(n=>`<li><button type="button" data-name="${esc(n.id)}" data-sel="${sel===n.id?'y':'n'}" style="--c:${COL[w]};animation-delay:${((i++)*0.9)%6}s">${esc(n.title)}</button></li>`).join('')+'</ul>';});
+ ['sup','gov','own'].forEach(w=>{if(!by[w].length)return;h+=`<div class="grp">${GRP[w]}</div><ul>`+by[w].map(n=>`<li><button type="button" data-name="${esc(n.id)}" data-sel="${sel===n.id?'y':'n'}" style="--c:${COL[w]};animation-delay:${((i++)*0.9)%6}s"><b style="font:500 11px var(--mono);min-width:16px">${NUM[n.id]||''}</b>${esc(n.title)}</button></li>`).join('')+'</ul>';});
  box.innerHTML=h;box.querySelectorAll('[data-name]').forEach(b=>b.addEventListener('click',()=>{const n=g.find(x=>x.id===b.dataset.name);showNet(true);sel=n.id;editing=n.kind==='role';renderMap();renderNote();if(innerWidth<=900){$('names').classList.remove('open');$('namesTab').setAttribute('aria-expanded','false');}$('note').scrollIntoView({behavior:'smooth',block:'start'});}));}
 $('namesTab').addEventListener('click',()=>{const o=$('names').classList.toggle('open');$('namesTab').setAttribute('aria-expanded',String(o));});
-function renderMap(){renderNames();const svg=$('map'),g=graph();$('mapEmpty').hidden=g.length>0;if(!g.length){svg.innerHTML='';return;}
+let NUM={};const numberAll=g=>{NUM={};[...g].sort((x,y)=>(x.createdAt||0)-(y.createdAt||0)).forEach((n,i)=>NUM[n.id]=i+1);};
+function renderMap(){numberAll(graph());renderNames();const svg=$('map'),g=graph();$('mapEmpty').hidden=g.length>0;if(!g.length){svg.innerHTML='';return;}
  const pos=place(g);let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;g.forEach(n=>{if(!pos[n.id])return;const[x,y]=xy(...pos[n.id]);x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);});
  if(x0>x1){svg.innerHTML='';$('mapEmpty').hidden=false;return;}const m=R+4;svg.setAttribute('viewBox',`${x0-m} ${y0-m} ${x1-x0+2*m} ${y1-y0+2*m}`);const who={};g.forEach(n=>who[n.id]=whoOf(g,n));
  let bands='',also='',hex='';
  g.forEach(n=>{(n.links||[]).forEach(id=>{if(!pos[id]||!pos[n.id])return;const a=xy(...pos[n.id]),b=xy(...pos[id]);also+=`<line class="also" data-on="${sel===n.id||sel===id?'y':'n'}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;});
-  if(!n.parent||!pos[n.parent]||!pos[n.id])return;const a=xy(...pos[n.id]),b=xy(...pos[n.parent]);const w=who[n.id],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;bands+=`<line class="band" data-keep="${n.kind==='link'?'y':'n'}" data-who="${w}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/><circle class="bead" data-who="${w}" cx="${mx}" cy="${my}" r="4"/><circle class="pulse" cx="${(a[0]*3+b[0])/4}" cy="${(a[1]*3+b[1])/4}" r="1.3"/><circle class="pulse" cx="${(a[0]+b[0]*3)/4}" cy="${(a[1]+b[1]*3)/4}" r="1.3"/>`;});
+  if(!n.parent||!pos[n.parent]||!pos[n.id])return;const a=xy(...pos[n.id]),b=xy(...pos[n.parent]);const w=who[n.id],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;bands+=`<line class="band" data-keep="${n.kind==='link'?'y':'n'}" data-who="${w}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/><circle class="spark" data-who="${w}" r="2.6"><animateMotion dur="${3.5+(NUM[n.id]%4)*0.6}s" repeatCount="indefinite" path="M${b[0]},${b[1]} L${a[0]},${a[1]}"/></circle>${(()=>{const lb=NUM[n.parent]+'→'+NUM[n.id],wd=lb.length*5.6+8;return `<g class="lnk" style="animation-delay:${(NUM[n.id]%6)*0.8}s"><rect class="lbg" data-who="${w}" x="${mx-wd/2}" y="${my-7}" width="${wd}" height="14" rx="7"/><text class="lnum" x="${mx}" y="${my+3.5}" text-anchor="middle">${lb}</text></g>`;})()}`;});
  g.forEach(n=>{if(!pos[n.id])return;const[x,y]=xy(...pos[n.id]),ls=wrap(n.title,11,3);let t='';ls.forEach((l,i)=>{t+=`<text x="${x}" y="${y+4+(i-(ls.length-1)/2)*13}" text-anchor="middle">${esc(l)}</text>`;});
-  hex+=`<g class="hex" tabindex="0" role="button" data-id="${esc(n.id)}" data-kind="${n.kind}" data-who="${who[n.id]}" data-tone="${esc(n.tone)}" data-outer="${n.outer?'y':'n'}" data-sel="${sel===n.id?'y':'n'}" aria-label="${esc(n.title)}"><circle class="glow" cx="${x}" cy="${y}" r="${R}"/><circle class="halo" cx="${x}" cy="${y}" r="${R}"/><circle class="body" cx="${x}" cy="${y}" r="${R-7}"/><circle class="ring" cx="${x}" cy="${y}" r="${R-11}"/><circle class="dot" cx="${x}" cy="${y-R+15}" r="2.4"/>${t}</g>`;});
+  hex+=`<g class="hex" tabindex="0" role="button" data-id="${esc(n.id)}" data-kind="${n.kind}" data-who="${who[n.id]}" data-tone="${esc(n.tone)}" data-outer="${n.outer?'y':'n'}" data-sel="${sel===n.id?'y':'n'}" aria-label="${esc(n.title)}"><circle class="glow" cx="${x}" cy="${y}" r="${R}"/><circle class="halo" cx="${x}" cy="${y}" r="${R}"/><circle class="body" cx="${x}" cy="${y}" r="${R-7}"/><circle class="ring" cx="${x}" cy="${y}" r="${R-11}"/><text class="hnum" x="${x}" y="${y-R+19}" text-anchor="middle">${NUM[n.id]}</text>${t}</g>`;});
  svg.innerHTML='<defs><filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter><filter id="soft"><feGaussianBlur stdDeviation="1"/></filter></defs>'+also+bands+hex;
  svg.querySelectorAll('.hex').forEach(h=>{const go=()=>open(h.dataset.id);h.addEventListener('click',go);h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});});}
 function open(id){sel=id;editing=false;renderMap();renderNote();}
