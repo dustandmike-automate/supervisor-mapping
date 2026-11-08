@@ -66,6 +66,8 @@ p{margin:0}
 @keyframes pop{from{opacity:0;transform:translateY(-8px) scale(.98)}}
 @media (prefers-reduced-motion:reduce){#net:not([hidden]){animation:none}}
 .chat{justify-self:center;width:min(520px,100%);background:var(--panel);border:1px solid #3FD4FF;box-shadow:0 0 18px #3FD4FF55;padding:12px;display:grid;gap:8px}
+.acTog{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:2px 0;cursor:pointer;color:#3FD4FF;font:700 15px var(--display)}
+#cBody:not([hidden]){animation:pop .25s ease-out}
 .chat .hist{max-height:220px;overflow:auto;display:grid;gap:6px;font-size:13px}
 .chat .hist div{border-top:1px solid var(--line);padding-top:4px;display:grid;gap:2px}
 .key{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:12.5px;color:var(--mute);align-items:center}
@@ -136,7 +138,7 @@ textarea{min-height:58px;resize:vertical}
 <circle cx="128" cy="150" r="17" fill="#3FD4FF"/>
 <path d="M128 140a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0v-7a4 4 0 0 1 4-4zm-8 10a8 8 0 0 0 16 0M128 158v4" fill="none" stroke="#050B16" stroke-width="2.2" stroke-linecap="round"/>
 </g></svg><span>Supervisor of supercluster mutations</span><span class="small" id="spkMsg" role="status" style="color:#9FEBFF">Tap a face to open the nodes. Tap the mic and say a node's name.</span></div>
-<section class="chat" id="chat" aria-label="Edit or ask the supervisor"><h3 style="color:#3FD4FF">Ask or change</h3><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><div class="row"><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></section>
+<section class="chat" id="chat" aria-label="Edit or ask the supervisor"><button type="button" id="acTog" class="acTog" aria-expanded="false" aria-controls="cBody"><span>Ask or change</span><span id="acArrow" aria-hidden="true">▾</span></button><div id="cBody" hidden style="display:grid;gap:8px"><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><div class="row"><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></div></section>
 <div class="brain" id="net" hidden>
 <section aria-label="Connected map">
 <svg id="map" class="net" role="group" aria-label="Linked nodes of roles and readings"></svg>
@@ -250,9 +252,12 @@ const showNet=open=>{const n=$('net');n.hidden=!open;$('bPyr').setAttribute('ari
 const act=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});};
 act($('bPyr'),()=>showNet($('net').hidden));
 const norm=t=>String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+function toggleAC(force){const b=$('cBody'),o=force===undefined?b.hidden:force;b.hidden=!o;$('acTog').setAttribute('aria-expanded',String(o));$('acArrow').textContent=o?'▴':'▾';if(o)$('cText').focus();}
+$('acTog').addEventListener('click',()=>toggleAC());
 const LANES=[[/^(ask )?(the )?governor\b/,'intraday','the governor (Intraday)'],[/^(ask )?(the )?intraday\b/,'intraday','the governor (Intraday)'],[/^(ask )?trigger\b/,'trigger','Trigger/1SD'],[/^(ask )?(the )?map\b/,'map','the map']];
 function callNode(heard){const h=norm(heard);if(!h)return;
- for(const [re,lane,name] of LANES){const m=h.match(re);if(m){const rest=String(heard).trim().split(/\s+/).slice(m[0].split(' ').length).join(' ');$('cLane').value=lane;$('cText').value=rest;$('cText').focus();$('chat').scrollIntoView({behavior:'smooth',block:'center'});say('spkMsg','Ready for '+name+'. Check the words, then tap Send.');return;}}const g=graph();let best=null,bs=0;
+ if(/^(a c|ac|ay see|a see|hey see|ask or change|ask change|open ask|close ask)$/.test(h)){toggleAC();say('spkMsg',$('cBody').hidden?'Ask or change closed.':'Ask or change open.');return;}
+ for(const [re,lane,name] of LANES){const m=h.match(re);if(m){toggleAC(true);const rest=String(heard).trim().split(/\s+/).slice(m[0].split(' ').length).join(' ');$('cLane').value=lane;$('cText').value=rest;$('cText').focus();$('chat').scrollIntoView({behavior:'smooth',block:'center'});say('spkMsg','Ready for '+name+'. Check the words, then tap Send.');return;}}const g=graph();let best=null,bs=0;
  g.forEach(n=>{const t=norm(n.title);if(!t)return;let sc=0;if(h===t)sc=100;else if(h.includes(t)||t.includes(h))sc=50+t.length;else{const hw=new Set(h.split(' '));sc=t.split(' ').filter(w=>w.length>2&&hw.has(w)).length*10;}if(sc>bs){bs=sc;best=n;}});
  if(!best||bs<10){say('spkMsg','Heard "'+heard+'". No node by that name.',true);return;}
  showNet(true);sel=best.id;editing=best.kind==='role';renderMap();renderNote();say('spkMsg','Opened '+best.title+(editing?', ready to edit.':'.'));
