@@ -60,7 +60,8 @@ p{margin:0}
 /* One outsized pyramid: click opens the responsibility network; edit or ask sits under it */
 .pyr{justify-self:center;display:grid;justify-items:center;gap:10px;background:none;border:0;padding:6px;cursor:pointer;color:#3FD4FF;font:700 17px/1.25 var(--display);text-align:center;filter:drop-shadow(0 0 14px #3FD4FF88)}
 .pyr svg{display:block;width:min(300px,70vw);height:auto}
-.pyr:hover svg polygon{fill:#0B2140}
+#bPyr:hover polygon{filter:brightness(1.35)}
+#bSpeak.on #spkHalo{opacity:.55;animation:spk 1s ease-in-out infinite}@keyframes spk{50%{r:32}}
 #net:not([hidden]){animation:pop .3s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes pop{from{opacity:0;transform:translateY(-8px) scale(.98)}}
 @media (prefers-reduced-motion:reduce){#net:not([hidden]){animation:none}}
@@ -108,7 +109,18 @@ textarea{min-height:58px;resize:vertical}
 .q .a{white-space:pre-wrap}
 </style>
 <main>
-<button class="pyr" type="button" id="bPyr" aria-expanded="false" aria-controls="net"><svg viewBox="0 0 270 230" aria-hidden="true"><polygon points="135,15 255,215 15,215" fill="#071628" stroke="#3FD4FF" stroke-width="4"/><line x1="135" y1="15" x2="135" y2="215" stroke="#3FD4FF" stroke-width="2" opacity=".6"/><line x1="75" y1="115" x2="195" y2="115" stroke="#3FD4FF" stroke-width="2" opacity=".6"/><circle cx="135" cy="155" r="15" fill="#3FD4FF"/></svg><span>Supervisor of supercluster mutations</span></button>
+<div class="pyr" id="pyrWrap"><svg viewBox="0 0 270 240" role="group" aria-label="Supervisor tetrahedron">
+<g id="bPyr" role="button" tabindex="0" aria-expanded="false" aria-controls="net" aria-label="Open the node network" style="cursor:pointer">
+<polygon points="135,12 22,188 150,228" fill="#0A2346" stroke="#3FD4FF" stroke-width="3" stroke-linejoin="round"/>
+<polygon points="135,12 150,228 252,176" fill="#06182F" stroke="#3FD4FF" stroke-width="3" stroke-linejoin="round"/>
+<line x1="22" y1="188" x2="252" y2="176" stroke="#3FD4FF" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45"/>
+<line x1="135" y1="12" x2="150" y2="228" stroke="#9FEBFF" stroke-width="2.5"/>
+</g>
+<g id="bSpeak" role="button" tabindex="0" aria-label="Speak a node name" style="cursor:pointer">
+<circle id="spkHalo" cx="128" cy="150" r="26" fill="#3FD4FF" opacity=".18"/>
+<circle cx="128" cy="150" r="17" fill="#3FD4FF"/>
+<path d="M128 140a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0v-7a4 4 0 0 1 4-4zm-8 10a8 8 0 0 0 16 0M128 158v4" fill="none" stroke="#050B16" stroke-width="2.2" stroke-linecap="round"/>
+</g></svg><span>Supervisor of supercluster mutations</span><span class="small" id="spkMsg" role="status" style="color:#9FEBFF">Tap a face to open the nodes. Tap the center and say a node's name.</span></div>
 <section class="chat" id="chat" aria-label="Edit or ask the supervisor"><h3 style="color:#3FD4FF">Ask or change</h3><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><div class="row"><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></section>
 <div class="brain" id="net" hidden>
 <section aria-label="Connected map">
@@ -209,7 +221,21 @@ function renderLive(){if(!live)return;
  renderMap();if(!editing)renderNote();}
 function renderLog(){const l=[...logs].sort((a,b)=>String(b.at).localeCompare(String(a.at)));$('log').innerHTML=l.map(x=>`<div><span class="mono">${esc(x.at)}</span><span class="mono">${esc(x.main)}</span><span>${esc(x.task||x.text)}${x.change?': '+esc(x.change):''}</span></div>`).join('')||'<span class="small">No transactions logged yet.</span>';}
 function renderReports(){const l=[...reports].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,8);$('cHist').innerHTML=l.map(r=>`<div><span><b style="font-weight:500;color:#3FD4FF">${esc({intraday:'Intraday',trigger:'Trigger/1SD',map:'Map'}[r.lane]||'General')}</b> · ${esc(r.text)}</span><span class="small">${r.fix?'Supervisor: '+esc(r.fix):'Waiting for the supervisor'}</span></div>`).join('');}
-$('bPyr').addEventListener('click',()=>{const n=$('net'),open=n.hidden;n.hidden=!open;$('bPyr').setAttribute('aria-expanded',String(open));if(open){renderMap();renderNote();}});
+const showNet=open=>{const n=$('net');n.hidden=!open;$('bPyr').setAttribute('aria-expanded',String(open));if(open){renderMap();renderNote();}};
+const act=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});};
+act($('bPyr'),()=>showNet($('net').hidden));
+const norm=t=>String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+function callNode(heard){const h=norm(heard);if(!h)return;const g=graph();let best=null,bs=0;
+ g.forEach(n=>{const t=norm(n.title);if(!t)return;let sc=0;if(h===t)sc=100;else if(h.includes(t)||t.includes(h))sc=50+t.length;else{const hw=new Set(h.split(' '));sc=t.split(' ').filter(w=>w.length>2&&hw.has(w)).length*10;}if(sc>bs){bs=sc;best=n;}});
+ if(!best||bs<10){say('spkMsg','Heard "'+heard+'". No node by that name.',true);return;}
+ showNet(true);sel=best.id;editing=best.kind==='role';renderMap();renderNote();say('spkMsg','Opened '+best.title+(editing?', ready to edit.':'.'));
+ const box=$('note');box.scrollIntoView({behavior:'smooth',block:'start'});const f=box.querySelector('#fNow,#fTitle');if(f)setTimeout(()=>f.focus(),300);}
+act($('bSpeak'),()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){const t=prompt('Say or type a node name');if(t)callNode(t);return;}
+ const r=new SR();r.lang='en-US';r.interimResults=false;r.maxAlternatives=3;$('bSpeak').classList.add('on');say('spkMsg','Listening…');
+ r.onresult=e=>{const alts=[...e.results[0]].map(a=>a.transcript);callNode(alts[0]);};
+ r.onerror=e=>say('spkMsg','Voice not available ('+e.error+'). Tap again to type.',true);
+ r.onend=()=>$('bSpeak').classList.remove('on');r.start();});
 renderMap();renderNote();
 $('cSend').addEventListener('click',async()=>{const t=$('cText').value.trim();if(!t){say('cMsg','Type the response first.',true);return;}if(!db){say('cMsg','Sign in to send.',true);return;}
  $('cSend').disabled=true;try{await db.doc('reports/r'+Date.now().toString(36)).set({text:t,lane:$('cLane').value,at:Date.now(),fix:''});$('cText').value='';say('cMsg','Sent. Answered on the next wake (within about 4 hours).');}catch(e){say('cMsg','Not sent: '+(e.message||e.code),true);}$('cSend').disabled=false;});
