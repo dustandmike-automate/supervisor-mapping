@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611082342"><meta name="theme-color" content="#050B16">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611091142"><meta name="theme-color" content="#050B16">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="sb.js"></script></head><body>
@@ -147,7 +147,7 @@ textarea{min-height:58px;resize:vertical}
 <line x1="22" y1="188" x2="252" y2="176" stroke="#3FD4FF" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45"/>
 <line x1="135" y1="12" x2="150" y2="228" stroke="#9FEBFF" stroke-width="2.5"/>
 </g>
-<g id="hb" aria-live="polite" pointer-events="none"><circle id="hbGlow" cx="190" cy="132" r="13" fill="#4BE39B" opacity=".25"/><circle id="hbDot" cx="190" cy="132" r="6.5" fill="#4BE39B"/><text id="hbTime" x="190" y="156" text-anchor="middle" font-size="11" fill="#E6F4FF" font-family="var(--mono)">--:-- ET</text></g>
+<g id="hb" aria-live="polite" pointer-events="none"><circle id="hbGlow" cx="190" cy="132" r="13" fill="#4BE39B" opacity=".25"/><circle id="hbDot" cx="190" cy="132" r="6.5" fill="#4BE39B"/><text id="hbTime" x="190" y="156" text-anchor="middle" font-size="11" fill="#E6F4FF" font-family="var(--mono)">--:-- ET</text><text id="hbAge" x="190" y="169" text-anchor="middle" font-size="10" fill="#9FEBFF" font-family="var(--mono)"></text></g>
 <g id="bSpeak" transform="translate(-88 -110)" role="button" tabindex="0" aria-label="Speak a node name" style="cursor:pointer">
 <circle id="spkHalo" cx="128" cy="150" r="26" fill="#3FD4FF" opacity=".18"/>
 <circle cx="128" cy="150" r="17" fill="#3FD4FF"/>
@@ -156,7 +156,7 @@ textarea{min-height:58px;resize:vertical}
 <section class="chat" id="chat" aria-label="Edit or ask the supervisor"><button type="button" id="acTog" class="acTog" aria-expanded="false" aria-controls="cBody"><span>Ask or change</span><span id="acArrow" aria-hidden="true">▾</span></button><div id="cBody" hidden style="display:grid;gap:8px"><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><div class="taWrap"><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><span class="grip" id="cGrip" role="separator" aria-label="Drag to resize the message box" aria-orientation="horizontal" tabindex="0"></span></div><div class="row"><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></div></section>
 <div class="brain" id="net" hidden>
 <section aria-label="Connected map">
-<svg id="map" class="net" role="group" aria-label="Linked nodes of roles and readings"></svg>
+<div style="position:relative;max-width:520px;margin:0 auto;background:radial-gradient(ellipse at center,#0C2440 0%,#050B16 75%);border-radius:6px"><svg id="map" class="net" role="group" aria-label="Linked nodes of roles and readings" style="background:none"></svg><canvas id="neur" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen"></canvas></div>
 <p class="small" id="mapEmpty">The map appears here once loaded.</p>
 <div class="key" style="justify-content:center;margin-top:6px">
 <span><svg width="12" height="12" viewBox="-7 -7 14 14" aria-hidden="true"><circle class="sw id" data-who="sup" r="5.5"/></svg>Supervisor (me)</span><span><svg width="12" height="12" viewBox="-7 -7 14 14" aria-hidden="true"><circle class="sw id" data-who="gov" r="5.5"/></svg>Governor</span><span><svg width="12" height="12" viewBox="-7 -7 14 14" aria-hidden="true"><circle class="sw id" data-who="own" r="5.5"/></svg>Owner</span>
@@ -216,6 +216,27 @@ $('namesTab').addEventListener('click',()=>{const o=$('names').classList.toggle(
 function flowHtml(n,g){const fed=g.filter(x=>x.id===n.parent),fires=g.filter(x=>x.parent===n.id);if(!fed.length&&!fires.length)return '';
  const row=(x,l)=>`<span><b>${l}</b> ${esc(x.title)}</span>`;
  return `<div class="flow"><span class="tag">Signal path (node ${NUM[n.id]})</span>${fed.map(x=>row(x,NUM[x.id]+'→'+NUM[n.id]+' fed by')).join('')}${fires.map(x=>row(x,NUM[n.id]+'→'+NUM[x.id]+' fires into')).join('')}</div>`;}
+const NEUR={vb:null,e:[],n:{}};
+(function neural(){const cv=$('neur'),x=cv.getContext('2d'),still=matchMedia('(prefers-reduced-motion: reduce)').matches;let t=0,amb=[];
+ const C={sup:'#3FD4FF',gov:'#B57BFF',own:'#FFD27A'};
+ function bolt(ax,ay,bx,by,j,seg){x.beginPath();x.moveTo(ax,ay);for(let i=1;i<seg;i++){const f=i/seg,nx=-(by-ay),ny=bx-ax,l=Math.hypot(nx,ny)||1,o=(Math.random()-.5)*j;x.lineTo(ax+(bx-ax)*f+nx/l*o,ay+(by-ay)*f+ny/l*o);}x.lineTo(bx,by);x.stroke();}
+ function frame(){t++;const svg=$('map');if($('net').hidden||!NEUR.vb||document.hidden){requestAnimationFrame(frame);return;}
+  const r=svg.getBoundingClientRect(),dp=devicePixelRatio||1;if(cv.width!==Math.round(r.width*dp)){cv.width=Math.round(r.width*dp);cv.height=Math.round(r.height*dp);}
+  const [vx,vy,vw,vh]=NEUR.vb,sc=Math.min(r.width/vw,r.height/vh),ox=(r.width-vw*sc)/2,oy=(r.height-vh*sc)/2,P=id=>{const p=NEUR.n[id];return p&&[(p[0]-vx)*sc+ox,(p[1]-vy)*sc+oy,p[2]];};
+  x.setTransform(dp,0,0,dp,0,0);x.clearRect(0,0,r.width,r.height);x.lineCap='round';
+  if(!still&&t%70===0&&NEUR.e.length)amb.push({e:NEUR.e[Math.floor(Math.random()*NEUR.e.length)],f:0});
+  NEUR.e.forEach(e=>{let a=P(e.a),b=P(e.b);if(!a||!b)return;const lit=svg.querySelector(`.lnk.lit[data-to="${CSS.escape(e.b)}"]`),c=C[b[2]]||C.sup;
+   x.strokeStyle=c;x.shadowColor=c;
+   if(lit){x.globalAlpha=.9;x.lineWidth=1.6;x.shadowBlur=14;bolt(a[0],a[1],b[0],b[1],10,9);x.globalAlpha=.5;x.lineWidth=.8;bolt(a[0],a[1],b[0],b[1],18,7);}
+   else{x.globalAlpha=.16+.08*Math.sin(t/40+a[0]);x.lineWidth=.7;x.shadowBlur=0;if(t%6===0||still)e.j=Math.random();bolt(a[0],a[1],b[0],b[1],4+3*(e.j||0),6);}});
+  amb=amb.filter(s=>{s.f+=.03;const a=P(s.e.a),b=P(s.e.b);if(!a||!b)return false;const c=C[b[2]]||C.sup,px=a[0]+(b[0]-a[0])*s.f,py=a[1]+(b[1]-a[1])*s.f;
+   x.globalAlpha=1-s.f*.4;x.fillStyle=c;x.shadowColor=c;x.shadowBlur=16;x.beginPath();x.arc(px,py,2.6,0,7);x.fill();
+   x.strokeStyle=c;x.lineWidth=.9;x.globalAlpha=.55;bolt(a[0],a[1],px,py,8,6);return s.f<1;});
+  Object.keys(NEUR.n).forEach(id=>{const p=P(id);if(!p)return;const lit=svg.querySelector(`.hex.lit[data-id="${CSS.escape(id)}"]`),c=C[p[2]]||C.sup,rr=40*sc;
+   x.strokeStyle=c;x.shadowColor=c;x.shadowBlur=lit?18:6;x.globalAlpha=lit?.8:.22+.12*Math.sin(t/25+p[0]);x.lineWidth=lit?1.2:.6;
+   const k=lit?9:4;for(let i=0;i<k;i++){const an=Math.random()*6.283,r1=rr*.95,r2=rr*(lit?1.7:1.25);bolt(p[0]+Math.cos(an)*r1,p[1]+Math.sin(an)*r1,p[0]+Math.cos(an)*r2,p[1]+Math.sin(an)*r2,lit?6:3,3);}});
+  x.globalAlpha=1;x.shadowBlur=0;x.globalCompositeOperation='destination-out';Object.keys(NEUR.n).forEach(id=>{const p=P(id);if(!p)return;x.beginPath();x.arc(p[0],p[1],30*sc,0,7);x.fill();});NEUR.e.forEach(e=>{const a=P(e.a),b=P(e.b);if(a&&b)x.fillRect((a[0]+b[0])/2-17*sc,(a[1]+b[1])/2-9*sc,34*sc,18*sc);});x.globalCompositeOperation='source-over';if(!still)requestAnimationFrame(frame);else setTimeout(()=>requestAnimationFrame(frame),1000);}
+ requestAnimationFrame(frame);})();
 let igT=[];function ignite(start){igT.forEach(clearTimeout);igT=[];const svg=$('map');if(!svg)return;const g=graph();
  svg.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit'));let lvl=[start],seen=new Set([start]),k=0;
  const fire=(ids,d)=>igT.push(setTimeout(()=>ids.forEach(id=>{const h=svg.querySelector(`.hex[data-id="${CSS.escape(id)}"]`);if(h)h.classList.add('lit');
@@ -235,7 +256,7 @@ setInterval(()=>{if(!$('net').hidden&&!editing&&!document.hidden)ignite('root');
 let NUM={};const numberAll=g=>{NUM={};[...g].sort((x,y)=>(x.createdAt||0)-(y.createdAt||0)).forEach((n,i)=>NUM[n.id]=i+1);};
 function renderMap(){numberAll(graph());renderNames();const svg=$('map'),g=graph();$('mapEmpty').hidden=g.length>0;if(!g.length){svg.innerHTML='';return;}
  const pos=place(g);let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;g.forEach(n=>{if(!pos[n.id])return;const[x,y]=xy(...pos[n.id]);x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);});
- if(x0>x1){svg.innerHTML='';$('mapEmpty').hidden=false;return;}const m=R+4;svg.setAttribute('viewBox',`${x0-m} ${y0-m} ${x1-x0+2*m} ${y1-y0+2*m}`);const who={};g.forEach(n=>who[n.id]=whoOf(g,n));
+ if(x0>x1){svg.innerHTML='';$('mapEmpty').hidden=false;return;}const m=R+4;svg.setAttribute('viewBox',`${x0-m} ${y0-m} ${x1-x0+2*m} ${y1-y0+2*m}`);const who={};g.forEach(n=>who[n.id]=whoOf(g,n));NEUR.vb=[x0-m,y0-m,x1-x0+2*m,y1-y0+2*m];NEUR.e=[];NEUR.n={};g.forEach(n=>{if(!pos[n.id])return;NEUR.n[n.id]=[...xy(...pos[n.id]),who[n.id]];if(n.parent&&pos[n.parent])NEUR.e.push({a:n.parent,b:n.id});});
  let bands='',also='',hex='';
  g.forEach(n=>{(n.links||[]).forEach(id=>{if(!pos[id]||!pos[n.id])return;const a=xy(...pos[n.id]),b=xy(...pos[id]);also+=`<line class="also" data-on="${sel===n.id||sel===id?'y':'n'}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;});
   if(!n.parent||!pos[n.parent]||!pos[n.id])return;const a=xy(...pos[n.id]),b=xy(...pos[n.parent]);const w=who[n.id],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;bands+=`<line class="band" data-keep="${n.kind==='link'?'y':'n'}" data-who="${w}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/><circle class="spark" data-to="${esc(n.id)}" data-who="${w}" r="3" cx="0" cy="0" style="offset-path:path('M${b[0]},${b[1]} L${a[0]},${a[1]}')"/>${(()=>{const lb=NUM[n.parent]+'→'+NUM[n.id],wd=lb.length*6.6+10;return `<g class="lnk" data-to="${esc(n.id)}"><rect class="lbg" data-who="${w}" x="${mx-wd/2}" y="${my-8}" width="${wd}" height="16" rx="8"/><text class="lnum" x="${mx}" y="${my+3.5}" text-anchor="middle">${lb}</text></g>`;})()}`;});
@@ -277,8 +298,9 @@ const cells=series=>`<div class="cells" role="img" aria-label="${esc(series.map(
 const ET=t=>{const d=new Date(t);return isNaN(d)?'--:--':d.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'});};
 const stale=t=>{const d=new Date(t);return isNaN(d)||Date.now()-d>4*3600e3;};
 function renderBeat(){if(!live)return;const c={clear:'#4BE39B',wait:'#FFC24D',fault:'#FF6B5E'}[live.health]||'#FFC24D';
- $('hbDot').setAttribute('fill',c);$('hbGlow').setAttribute('fill',c);const t=live.updated||live.read_at;$('hbTime').textContent=ET(t)+' ET';
- $('hb').setAttribute('aria-label','Health '+(live.health||'unknown')+', updated '+ET(t)+' ET');}
+ $('hbDot').setAttribute('fill',c);$('hbGlow').setAttribute('fill',c);const t=live.updated||live.read_at;const age=(Date.now()-new Date(t))/6e4,ag=isNaN(age)?'':age<1?'read now':age<60?'read '+Math.round(age)+'m ago':'read '+(age/60).toFixed(age<600?1:0)+'h ago';$('hbAge').textContent=ag;$('hbAge').setAttribute('fill',age>240?'#FFC24D':'#9FEBFF');
+ $('hb').setAttribute('aria-label','Health '+(live.health||'unknown')+', last read '+ET(t)+' ET');}
+function tickClock(){const d=new Date();$('hbTime').textContent=d.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit',second:'2-digit'})+' ET';}tickClock();setInterval(tickClock,1000);setInterval(()=>{if(live)renderBeat();},30000);
 function renderLive(){if(!live)return;renderBeat();
  $('charts').innerHTML=(live.readings||[]).map(r=>{let c='';if(r.viz==='cells')c=cells(r.series||[]);if(r.viz==='bars')c=bars(r.rows||[]);const t=r.read_at||live.read_at,old=stale(t);return `<article class="chart"><h3>${esc(r.title)}</h3><p class="small" style="color:${old?'var(--wait)':'var(--good)'}">${old?'Stale · ':''}read ${esc(ET(t))} ET</p><p class="small">${esc(r.now)}</p>${c}</article>`;}).join('');
  renderMap();if(!editing)renderNote();}
