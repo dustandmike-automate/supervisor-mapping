@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611091142"><meta name="theme-color" content="#050B16">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611091154"><meta name="theme-color" content="#050B16">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="sb.js"></script></head><body>
@@ -153,7 +153,7 @@ textarea{min-height:58px;resize:vertical}
 <circle cx="128" cy="150" r="17" fill="#3FD4FF"/>
 <path d="M128 140a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0v-7a4 4 0 0 1 4-4zm-8 10a8 8 0 0 0 16 0M128 158v4" fill="none" stroke="#050B16" stroke-width="2.2" stroke-linecap="round"/>
 </g></svg><span>Supervisor of supercluster mutations</span><span class="small" id="spkMsg" role="status" style="color:#9FEBFF">Tap a face to open the nodes. Tap the mic and say a node's name.</span></div>
-<section class="chat" id="chat" aria-label="Edit or ask the supervisor"><button type="button" id="acTog" class="acTog" aria-expanded="false" aria-controls="cBody"><span>Ask or change</span><span id="acArrow" aria-hidden="true">▾</span></button><div id="cBody" hidden style="display:grid;gap:8px"><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><div class="taWrap"><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><span class="grip" id="cGrip" role="separator" aria-label="Drag to resize the message box" aria-orientation="horizontal" tabindex="0"></span></div><div class="row"><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></div></section>
+<section class="chat" id="chat" aria-label="Edit or ask the supervisor"><button type="button" id="acTog" class="acTog" aria-expanded="false" aria-controls="cBody"><span>Ask or change</span><span id="acArrow" aria-hidden="true">▾</span></button><div id="cBody" hidden style="display:grid;gap:8px"><p class="small">Pick the lane, then send. Works from any browser; the supervisor answers here.</p><label for="cLane">Lane<select id="cLane"><option value="intraday">Intraday super cluster (governor)</option><option value="trigger">Trigger / 1SD (intake)</option><option value="map">This map</option></select></label><div class="taWrap"><textarea id="cText" maxlength="2000" aria-label="Your edit or question"></textarea><span class="grip" id="cGrip" role="separator" aria-label="Drag to resize the message box" aria-orientation="horizontal" tabindex="0"></span></div><div class="row"><label class="btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">Add image<input id="cImg" type="file" accept="image/*" multiple hidden></label><span id="cImgs" class="small"></span><button class="btn pri" type="button" id="cSend">Send</button><span class="msg" id="cMsg" role="status"></span></div><div class="hist" id="cHist"></div></div></section>
 <div class="brain" id="net" hidden>
 <section aria-label="Connected map">
 <div style="position:relative;max-width:520px;margin:0 auto;background:radial-gradient(ellipse at center,#0C2440 0%,#050B16 75%);border-radius:6px"><svg id="map" class="net" role="group" aria-label="Linked nodes of roles and readings" style="background:none"></svg><canvas id="neur" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen"></canvas></div>
@@ -219,22 +219,22 @@ function flowHtml(n,g){const fed=g.filter(x=>x.id===n.parent),fires=g.filter(x=>
 const NEUR={vb:null,e:[],n:{}};
 (function neural(){const cv=$('neur'),x=cv.getContext('2d'),still=matchMedia('(prefers-reduced-motion: reduce)').matches;let t=0,amb=[];
  const C={sup:'#3FD4FF',gov:'#B57BFF',own:'#FFD27A'};
+ function sbolt(ax,ay,bx,by,j,seg,sd){let r=sd%233280||1;const rnd=()=>(r=(r*9301+49297)%233280)/233280;x.beginPath();x.moveTo(ax,ay);for(let i=1;i<seg;i++){const f=i/seg,nx=-(by-ay),ny=bx-ax,l=Math.hypot(nx,ny)||1,o=(rnd()-.5)*j;x.lineTo(ax+(bx-ax)*f+nx/l*o,ay+(by-ay)*f+ny/l*o);}x.lineTo(bx,by);x.stroke();}
  function bolt(ax,ay,bx,by,j,seg){x.beginPath();x.moveTo(ax,ay);for(let i=1;i<seg;i++){const f=i/seg,nx=-(by-ay),ny=bx-ax,l=Math.hypot(nx,ny)||1,o=(Math.random()-.5)*j;x.lineTo(ax+(bx-ax)*f+nx/l*o,ay+(by-ay)*f+ny/l*o);}x.lineTo(bx,by);x.stroke();}
  function frame(){t++;const svg=$('map');if($('net').hidden||!NEUR.vb||document.hidden){requestAnimationFrame(frame);return;}
   const r=svg.getBoundingClientRect(),dp=devicePixelRatio||1;if(cv.width!==Math.round(r.width*dp)){cv.width=Math.round(r.width*dp);cv.height=Math.round(r.height*dp);}
   const [vx,vy,vw,vh]=NEUR.vb,sc=Math.min(r.width/vw,r.height/vh),ox=(r.width-vw*sc)/2,oy=(r.height-vh*sc)/2,P=id=>{const p=NEUR.n[id];return p&&[(p[0]-vx)*sc+ox,(p[1]-vy)*sc+oy,p[2]];};
   x.setTransform(dp,0,0,dp,0,0);x.clearRect(0,0,r.width,r.height);x.lineCap='round';
-  if(!still&&t%70===0&&NEUR.e.length)amb.push({e:NEUR.e[Math.floor(Math.random()*NEUR.e.length)],f:0});
   NEUR.e.forEach(e=>{let a=P(e.a),b=P(e.b);if(!a||!b)return;const lit=svg.querySelector(`.lnk.lit[data-to="${CSS.escape(e.b)}"]`),c=C[b[2]]||C.sup;
    x.strokeStyle=c;x.shadowColor=c;
-   if(lit){x.globalAlpha=.9;x.lineWidth=1.6;x.shadowBlur=14;bolt(a[0],a[1],b[0],b[1],10,9);x.globalAlpha=.5;x.lineWidth=.8;bolt(a[0],a[1],b[0],b[1],18,7);}
-   else{x.globalAlpha=.16+.08*Math.sin(t/40+a[0]);x.lineWidth=.7;x.shadowBlur=0;if(t%6===0||still)e.j=Math.random();bolt(a[0],a[1],b[0],b[1],4+3*(e.j||0),6);}});
+   if(!lit){e.s=0;return;}if(!e.s)e.s=1+Math.floor(Math.random()*1e6);
+   x.globalAlpha=.9;x.lineWidth=1.5;x.shadowBlur=12;sbolt(a[0],a[1],b[0],b[1],9,9,e.s);x.globalAlpha=.45;x.lineWidth=.7;sbolt(a[0],a[1],b[0],b[1],15,7,e.s+7);});
   amb=amb.filter(s=>{s.f+=.03;const a=P(s.e.a),b=P(s.e.b);if(!a||!b)return false;const c=C[b[2]]||C.sup,px=a[0]+(b[0]-a[0])*s.f,py=a[1]+(b[1]-a[1])*s.f;
    x.globalAlpha=1-s.f*.4;x.fillStyle=c;x.shadowColor=c;x.shadowBlur=16;x.beginPath();x.arc(px,py,2.6,0,7);x.fill();
    x.strokeStyle=c;x.lineWidth=.9;x.globalAlpha=.55;bolt(a[0],a[1],px,py,8,6);return s.f<1;});
   Object.keys(NEUR.n).forEach(id=>{const p=P(id);if(!p)return;const lit=svg.querySelector(`.hex.lit[data-id="${CSS.escape(id)}"]`),c=C[p[2]]||C.sup,rr=40*sc;
-   x.strokeStyle=c;x.shadowColor=c;x.shadowBlur=lit?18:6;x.globalAlpha=lit?.8:.22+.12*Math.sin(t/25+p[0]);x.lineWidth=lit?1.2:.6;
-   const k=lit?9:4;for(let i=0;i<k;i++){const an=Math.random()*6.283,r1=rr*.95,r2=rr*(lit?1.7:1.25);bolt(p[0]+Math.cos(an)*r1,p[1]+Math.sin(an)*r1,p[0]+Math.cos(an)*r2,p[1]+Math.sin(an)*r2,lit?6:3,3);}});
+   if(!lit)return;const sd=(id.length*97+Math.round(p[0]))|0;x.strokeStyle=c;x.shadowColor=c;x.shadowBlur=14;x.globalAlpha=.75;x.lineWidth=1.1;
+   for(let i=0;i<8;i++){const an=i*.785+((sd%7)*.11),r1=rr*.95,r2=rr*1.6;sbolt(p[0]+Math.cos(an)*r1,p[1]+Math.sin(an)*r1,p[0]+Math.cos(an)*r2,p[1]+Math.sin(an)*r2,6,3,sd+i);}});
   x.globalAlpha=1;x.shadowBlur=0;x.globalCompositeOperation='destination-out';Object.keys(NEUR.n).forEach(id=>{const p=P(id);if(!p)return;x.beginPath();x.arc(p[0],p[1],30*sc,0,7);x.fill();});NEUR.e.forEach(e=>{const a=P(e.a),b=P(e.b);if(a&&b)x.fillRect((a[0]+b[0])/2-17*sc,(a[1]+b[1])/2-9*sc,34*sc,18*sc);});x.globalCompositeOperation='source-over';if(!still)requestAnimationFrame(frame);else setTimeout(()=>requestAnimationFrame(frame),1000);}
  requestAnimationFrame(frame);})();
 let igT=[];function ignite(start){igT.forEach(clearTimeout);igT=[];const svg=$('map');if(!svg)return;const g=graph();
@@ -244,7 +244,7 @@ let igT=[];function ignite(start){igT.forEach(clearTimeout);igT=[];const svg=$('
  fire([start],0);
  while(lvl.length&&k<8){k++;const nx=[];lvl.forEach(p=>g.filter(x=>x.parent===p&&!seen.has(x.id)).forEach(x=>{seen.add(x.id);nx.push(x.id);}));if(nx.length)fire(nx,k*900);lvl=nx;}
  igT.push(setTimeout(()=>svg.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit')),k*900+2200));}
-setInterval(()=>{if(!$('net').hidden&&!editing&&!document.hidden)ignite('root');},12000);
+
 (function(){const gr=$('cGrip'),ta=$('cText');let drag=false,y0=0,h0=0;
  const Y=e=>e.touches?e.touches[0].clientY:e.clientY;
  const start=e=>{e.preventDefault();drag=true;y0=Y(e);h0=ta.offsetHeight;};
@@ -305,7 +305,7 @@ function renderLive(){if(!live)return;renderBeat();
  $('charts').innerHTML=(live.readings||[]).map(r=>{let c='';if(r.viz==='cells')c=cells(r.series||[]);if(r.viz==='bars')c=bars(r.rows||[]);const t=r.read_at||live.read_at,old=stale(t);return `<article class="chart"><h3>${esc(r.title)}</h3><p class="small" style="color:${old?'var(--wait)':'var(--good)'}">${old?'Stale · ':''}read ${esc(ET(t))} ET</p><p class="small">${esc(r.now)}</p>${c}</article>`;}).join('');
  renderMap();if(!editing)renderNote();}
 function renderLog(){const l=[...logs].sort((a,b)=>String(b.at).localeCompare(String(a.at)));$('log').innerHTML=l.map(x=>`<div><span class="mono">${esc(x.at)}</span><span class="mono">${esc(x.main)}</span><span>${esc(x.task||x.text)}${x.change?': '+esc(x.change):''}</span></div>`).join('')||'<span class="small">No transactions logged yet.</span>';}
-function renderReports(){const l=[...reports].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,8);$('cHist').innerHTML=l.map(r=>`<div><span><b style="font-weight:500;color:#3FD4FF">${esc({intraday:'Intraday',trigger:'Trigger/1SD',map:'Map'}[r.lane]||'General')}</b> · ${esc(r.text)}</span><span class="small">${r.fix?'Supervisor: '+esc(r.fix):'Waiting for the supervisor'}</span></div>`).join('');}
+function renderReports(){const l=[...reports].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,8);$('cHist').innerHTML=l.map(r=>`<div><span><b style="font-weight:500;color:#3FD4FF">${esc({intraday:'Intraday',trigger:'Trigger/1SD',map:'Map'}[r.lane]||'General')}</b> · ${esc(r.text)}${(r.img||[]).map(d=>/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d)?`<img src="${d}" alt="Attached image" style="height:48px;border-radius:4px;margin:4px 4px 0 0">`:'').join('')}</span><span class="small">${r.fix?'Supervisor: '+esc(r.fix):'Waiting for the supervisor'}</span></div>`).join('');}
 const showNet=open=>{const n=$('net');const was=n.hidden;n.hidden=!open;$('bPyr').setAttribute('aria-expanded',String(open));if(open){renderMap();renderNote();if(was)setTimeout(()=>ignite('root'),400);}};
 const act=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});};
 act($('bPyr'),()=>showNet($('net').hidden));
@@ -332,8 +332,10 @@ const myV=(document.querySelector('meta[name=app-version]')||{}).content;
 async function checkV(){try{const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text();const m=t.match(/name="app-version" content="([^"]+)"/);
  if(m&&myV&&m[1]!==myV&&!editing&&!$('cText').value.trim())location.reload();}catch(e){}}
 setInterval(checkV,120000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkV();});
+let cImgs=[];function shrink(f){return new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.72));};im.onerror=no;im.src=u;});}
+$('cImg').addEventListener('change',async e=>{for(const f of [...e.target.files].slice(0,4-cImgs.length)){try{cImgs.push(await shrink(f));}catch(_){say('cMsg','That file could not be read as an image.',true);}}e.target.value='';$('cImgs').innerHTML=cImgs.map((d,i)=>`<img src="${d}" alt="Attached image ${i+1}" style="height:34px;border-radius:4px;vertical-align:middle;margin-right:4px">`).join('')+(cImgs.length?' <button type="button" class="btn" id="cImgX">Clear</button>':'');const x=$('cImgX');if(x)x.onclick=()=>{cImgs=[];$('cImgs').innerHTML='';};});
 $('cSend').addEventListener('click',async()=>{const t=$('cText').value.trim();if(!t){say('cMsg','Type the response first.',true);return;}if(!db){say('cMsg','Sign in to send.',true);return;}
- $('cSend').disabled=true;try{await db.doc('reports/r'+Date.now().toString(36)).set({text:t,lane:$('cLane').value,at:Date.now(),fix:''});$('cText').value='';say('cMsg','Sent. Answered on the next wake (within about 4 hours).');}catch(e){say('cMsg','Not sent: '+(e.message||e.code),true);}$('cSend').disabled=false;});
+ $('cSend').disabled=true;try{await db.doc('reports/r'+Date.now().toString(36)).set(Object.assign({text:t,lane:$('cLane').value,at:Date.now(),fix:''},cImgs.length?{img:cImgs}:{}));$('cText').value='';cImgs=[];$('cImgs').innerHTML='';say('cMsg','Sent. Answered on the next wake (within about 4 hours).');}catch(e){say('cMsg','Not sent: '+(e.message||e.code),true);}$('cSend').disabled=false;});
 (async()=>{
  db=await window.SBDB();if(!db){$('mapEmpty').textContent='Sign in to load this map.';return;}
  const t=setTimeout(()=>{if(!nodes.length)$('mapEmpty').textContent='The map is taking too long to load. Reopen the page to try again.';},10000);
