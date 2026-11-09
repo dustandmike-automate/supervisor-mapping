@@ -21,7 +21,10 @@ const db={
     set:d=>write(c,id,d),
     update:async patch=>{let cur=C(c).get(id);if(!cur){const r=await sb.from('docs').select('data').eq('coll',c).eq('id',id).maybeSingle();cur=r.data&&r.data.data||{};}return write(c,id,Object.assign({},cur,patch));},
     delete:async()=>{const{error}=await sb.from('docs').delete().eq('coll',c).eq('id',id);if(error)throw error;C(c).delete(id);}
-  };}
+  };},
+  upload:async f=>{const ext=(f.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,''),path=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;
+    const{error}=await sb.storage.from('media').upload(path,f,{contentType:f.type||'video/mp4',upsert:false});if(error)throw error;return path;},
+  mediaUrl:async path=>{const{data,error}=await sb.storage.from('media').createSignedUrl(path,3600);if(error)throw error;return data.signedUrl;}
 };
 let ready;const gate=new Promise(r=>ready=r);
 window.SBDB=()=>gate;
