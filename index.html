@@ -1,8 +1,8 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611091215"><meta name="theme-color" content="#050B16">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Supervisor"><meta name="app-version" content="202611101800"><meta name="theme-color" content="#050B16">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="sb.js"></script></head><body>
+<script src="sb.js"></script><script src="cmd.js"></script></head><body>
 <div id="auth" hidden style="max-width:360px;margin:12vh auto;padding:0 16px;display:grid;gap:10px;font:15px -apple-system,sans-serif">
 <h1 style="margin:0;font-size:22px">Supervisor Mapping</h1><p style="margin:0;opacity:.75">Owner sign-in.</p><img src="icon.svg" alt="" width="96" height="96" style="justify-self:center;border-radius:22px">
 <input id="aEmail" type="email" autocomplete="username" placeholder="Email" style="padding:10px;font:inherit">
@@ -140,6 +140,7 @@ textarea{min-height:58px;resize:vertical}
 </style>
 <aside class="names" id="names" aria-label="All node names"><h3>Names</h3><div id="nameList"></div></aside><button class="namesTab" id="namesTab" type="button" aria-controls="names" aria-expanded="false">Names</button>
 <main>
+<section id="cc"></section>
 <div class="pyr" id="pyrWrap"><svg viewBox="0 0 270 240" role="group" aria-label="Supervisor tetrahedron">
 <g id="bPyr" role="button" tabindex="0" aria-expanded="false" aria-controls="net" aria-label="Open the node network" style="cursor:pointer">
 <polygon points="135,12 22,188 150,228" fill="#0A2346" stroke="#3FD4FF" stroke-width="3" stroke-linejoin="round"/>
@@ -306,7 +307,7 @@ function renderLive(){if(!live)return;renderBeat();
  renderMap();if(!editing)renderNote();}
 function renderLog(){const l=[...logs].sort((a,b)=>String(b.at).localeCompare(String(a.at)));$('log').innerHTML=l.map(x=>`<div><span class="mono">${esc(x.at)}</span><span class="mono">${esc(x.main)}</span><span>${esc(x.task||x.text)}${x.change?': '+esc(x.change):''}</span></div>`).join('')||'<span class="small">No transactions logged yet.</span>';}
 async function fillMedia(){for(const v of document.querySelectorAll('video[data-media]:not([src])')){try{v.src=await db.mediaUrl(v.dataset.media);}catch(_){}}}
-function renderReports(){const l=[...reports].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,8);$('cHist').innerHTML=l.map(r=>`<div><span><b style="font-weight:500;color:#3FD4FF">${esc({intraday:'Intraday',trigger:'Trigger/1SD',map:'Map'}[r.lane]||'General')}</b> · ${esc(r.text)}${(r.img||[]).map(d=>/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d)?`<img src="${d}" alt="Attached image" style="height:48px;border-radius:4px;margin:4px 4px 0 0">`:'').join('')}${(r.vid||[]).map(v=>/^[a-z0-9-]+\.[a-z0-9]+$/.test(v)?`<video data-media="${v}" controls playsinline preload="metadata" style="display:block;max-width:100%;max-height:220px;border-radius:6px;margin-top:4px"></video>`:'').join('')}</span><span class="small">${r.fix?'Supervisor: '+esc(r.fix):'Waiting for the supervisor'}</span></div>`).join('');fillMedia();}
+function renderReports(){const l=[...reports].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,8);$('cHist').innerHTML=l.map(r=>`<div><span><b style="font-weight:500;color:#3FD4FF">${esc({intraday:'Intraday',trigger:'Trigger/1SD',map:'Map',cmd:'Command'}[r.lane]||'General')}</b> · ${esc(r.text)}${(r.img||[]).map(d=>/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d)?`<img src="${d}" alt="Attached image" style="height:48px;border-radius:4px;margin:4px 4px 0 0">`:'').join('')}${(r.vid||[]).map(v=>/^[a-z0-9-]+\.[a-z0-9]+$/.test(v)?`<video data-media="${v}" controls playsinline preload="metadata" style="display:block;max-width:100%;max-height:220px;border-radius:6px;margin-top:4px"></video>`:'').join('')}</span><span class="small">${r.fix?'Supervisor: '+esc(r.fix):'Waiting for the supervisor'}</span></div>`).join('');fillMedia();}
 const showNet=open=>{const n=$('net');const was=n.hidden;n.hidden=!open;$('bPyr').setAttribute('aria-expanded',String(open));if(open){renderMap();renderNote();if(was)setTimeout(()=>ignite('root'),400);}};
 const act=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});};
 act($('bPyr'),()=>showNet($('net').hidden));
