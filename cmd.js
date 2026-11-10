@@ -8,12 +8,12 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .bar{display:flex;align-items:center;gap:10px;font:700 11px/1 var(--mono);letter-spacing:.22em;color:var(--dim)}
 .cc .bar b{color:var(--pearl);font-weight:700}.cc .bar .seg{flex:1;height:2px;background:linear-gradient(90deg,var(--edge),transparent);opacity:.6}
 .cc .bar .dot{width:6px;height:6px;background:var(--edge);box-shadow:0 0 8px var(--edge)}
-.cc .vp{position:relative;height:250px;padding:1px;background:linear-gradient(180deg,#26344A,#0B1018);clip-path:polygon(9% 0,91% 0,100% 18%,100% 82%,91% 100%,9% 100%,0 82%,0 18%)}
+.cc .vp{position:relative;height:clamp(300px,72vw,380px);padding:1px;background:linear-gradient(180deg,#26344A,#0B1018);clip-path:polygon(9% 0,91% 0,100% 18%,100% 82%,91% 100%,9% 100%,0 82%,0 18%)}
 .cc .vp .glass{position:relative;height:100%;background:#020308;clip-path:polygon(9% 0,91% 0,100% 18%,100% 82%,91% 100%,9% 100%,0 82%,0 18%);overflow:hidden}
 .cc .vp canvas{position:absolute;inset:0;width:100%;height:100%}
 .cc .vp .rim{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 40px rgba(2,3,8,.95),inset 0 1px 0 rgba(63,212,255,.35)}
 .cc .hud{position:absolute;left:9%;right:9%;top:14px;display:flex;justify-content:space-between;font:700 10px/1 var(--mono);letter-spacing:.2em;color:rgba(238,243,255,.62)}
-.cc .heard{position:absolute;left:9%;right:9%;bottom:96px;font:700 clamp(15px,4.4vw,19px)/1.3 var(--display);color:var(--pearl);text-shadow:0 2px 14px rgba(2,3,8,.9),0 0 24px rgba(63,212,255,.35);word-break:break-word}
+.cc .heard{position:absolute;left:9%;right:9%;bottom:96px;max-height:4.2em;overflow:hidden;font:700 clamp(15px,4.2vw,18px)/1.3 var(--display);color:var(--pearl);text-shadow:0 2px 14px rgba(2,3,8,.9),0 0 24px rgba(63,212,255,.35);word-break:break-word}
 .cc .heard i{font-style:normal;color:rgba(234,217,166,.85)}
 .cc .st{position:absolute;left:9%;right:9%;bottom:78px;font:500 11px/1.2 var(--mono);color:var(--gold);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc .orb{position:absolute;left:50%;bottom:12px;z-index:2;transform:translateX(-50%);width:62px;height:62px;border-radius:50%;cursor:pointer;border:1px solid rgba(63,212,255,.8);background:radial-gradient(circle at 50% 35%,#BFF3FF 0%,var(--edge) 18%,var(--saph) 48%,#0A1530 78%);box-shadow:0 0 0 6px rgba(4,6,10,.85),0 0 28px rgba(63,212,255,.55)}
@@ -39,6 +39,22 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .floor{height:16px;margin:0 -12px;background:linear-gradient(100deg,transparent 8%,rgba(63,212,255,.7) 8.5%,transparent 9.5%) ,linear-gradient(80deg,transparent 90.5%,rgba(63,212,255,.7) 91.5%,transparent 92%),linear-gradient(180deg,#070A10,#04060A)}
 #ccM .k{font-size:10px;letter-spacing:0;padding-inline:2px}
 @media (max-width:420px){.cc .con .nm{font-size:8px}.cc .hull{padding-inline:8px}.cc .cons{gap:6px}}
+.cc .vp .glass{background:#020308 url(bridge.jpg) center/cover no-repeat}
+.cc .vp .img{position:absolute;inset:-3%;background:url(bridge.jpg) center/cover no-repeat;animation:ccB 14s ease-in-out infinite;filter:saturate(1.05) brightness(.9)}
+@keyframes ccB{50%{transform:scale(1.04);filter:saturate(1.12) brightness(1)}}
+.cc .vp .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,3,8,.55) 0%,rgba(2,3,8,0) 28%,rgba(2,3,8,0) 50%,rgba(2,3,8,.92) 72%,rgba(2,3,8,.97) 100%)}
+.cc .vp .scan{position:absolute;left:0;right:0;height:38%;background:linear-gradient(180deg,rgba(63,212,255,0),rgba(63,212,255,.07),rgba(63,212,255,0));animation:ccS 9s linear infinite}
+@keyframes ccS{from{top:-40%}to{top:100%}}
+.cc{animation:ccH 7s ease-in-out infinite}@keyframes ccH{50%{filter:drop-shadow(0 0 18px rgba(63,212,255,.28))}}
+.cc .type{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px}
+.cc .type input{font:500 13px/1.2 var(--display);color:var(--pearl);background:#070B12;border:1px solid #1E2A3C;border-radius:0;padding:10px}
+.cc .type input:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 1px rgba(63,212,255,.35)}
+body{background:radial-gradient(90% 60% at 50% 0%,#0B1424 0%,#03050A 70%) fixed #03050A!important;color:#EEF3FF}
+#names,#namesTab,#bSpeak,#spkMsg,main>*:not(#cc):not(#pyrWrap){display:none!important}
+main{display:flex!important;flex-direction:column;gap:6px;max-width:560px;margin:0 auto}
+#pyrWrap{order:0;color:#9FEBFF!important;animation:ccF 9s ease-in-out infinite}#cc{order:1}
+@keyframes ccF{50%{transform:translateY(-4px)}}
+#pyrWrap svg{width:min(210px,52vw)!important}
 .cc .help{font:400 10px/1.4 var(--mono);color:var(--dim);padding:0 2px}`;
 const AG=[['you','You'],['orch','Orchestrator'],['fable','Fable'],['gov','Governor'],['loop','Cloud loop'],['watch','Watcher']];
 const MODELS=['orchestrator','fable','opus','sonnet','haiku'],EFF=['low','medium','high','max'];
@@ -50,20 +66,21 @@ function mount(){
   host.className='cc';host.setAttribute('aria-label','Command deck');
   host.innerHTML=`<div class="hull">
   <div class="bar"><span class="dot"></span><b>BRIDGE</b><span>COMMAND DECK</span><span class="seg"></span><span id="ccClock"></span></div>
-  <div class="vp"><div class="glass"><canvas id="ccFx" aria-hidden="true"></canvas><div class="rim"></div>
+  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><div class="rim"></div>
    <div class="hud"><span id="ccHudL">VOICE</span><span id="ccHudR">CREW</span></div>
    <div class="heard" id="ccHeard" aria-live="polite"><i>Say "brief" for the state. Speak a task, then say "send".</i></div>
    <div class="st" id="ccSt">Voice starting…</div>
    <button class="orb off" id="ccOrb" type="button" aria-label="Voice on or off"></button></div></div>
   <div class="cons" id="ccCons" aria-label="Agent consoles">${AG.map(([k,l])=>`<div class="con" data-k="${k}" data-s="idle"><div class="in"><canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="nm">${l.toUpperCase()}</div><div class="nt"></div></div></div><span class="ln"></span></div>`).join('')}</div>
   <div class="keys"><div class="kl">DELEGATE TO</div><div class="row" id="ccM"></div><div class="kl">EFFORT</div><div class="row" id="ccE"></div>
-   <div class="row" style="margin-top:4px"><button class="k" id="ccBrief" type="button">Brief</button><button class="k" id="ccClr" type="button">Clear</button><button class="k go" id="ccSend" type="button">Send</button></div>
+   <form class="type" id="ccType"><input id="ccIn" maxlength="600" placeholder="Speak, or type a command" aria-label="Type a command"><button class="k go" id="ccSend" type="submit">Send</button></form>
+   <div class="row" style="margin-top:4px"><button class="k" id="ccBrief" type="button">Brief</button><button class="k" id="ccClr" type="button">Clear</button></div>
    <div class="help">Voice words: brief · send · clear · mute. Say a model and an effort to delegate.</div></div>
   <div class="floor"></div></div>`;
   const keys=(id,list,set)=>{const el=$(id);el.innerHTML=list.map(v=>`<button type="button" class="k" data-v="${v}">${v==='orchestrator'?'orch':v}</button>`).join('');el.onclick=e=>{const v=e.target.dataset&&e.target.dataset.v;if(v){set(v);paint();}};};
   keys('#ccM',MODELS,v=>model=v);keys('#ccE',EFF,v=>effort=v);
   $('#ccOrb').onclick=()=>{if(on){want=false;stop();}else{want=true;start();brief();}};
-  $('#ccSend').onclick=send;$('#ccBrief').onclick=brief;$('#ccClr').onclick=()=>{buf='';interim='';paint();};
+  $('#ccType').onsubmit=e=>{e.preventDefault();const v=$('#ccIn').value.trim();if(v){buf=v;$('#ccIn').value='';}send();};const py=document.getElementById('bPyr');if(py)py.addEventListener('click',e=>{e.stopImmediatePropagation();brief();},true);$('#ccBrief').onclick=brief;$('#ccClr').onclick=()=>{buf='';interim='';paint();};
   fx();return true;
 }
 function paint(){
@@ -116,8 +133,9 @@ function brief(){
 }
 function say(t){
   status(t);if(!window.speechSynthesis)return;
-  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=1.04;u.pitch=.95;
-  const v=speechSynthesis.getVoices().find(v=>/en-(US|GB)/.test(v.lang)&&/Samantha|Daniel|Google|Natural/.test(v.name));if(v)u.voice=v;
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.94;u.pitch=.88;
+  const V=speechSynthesis.getVoices().filter(v=>/^en[-_](US|GB)/.test(v.lang)),pick=[/Premium/i,/Enhanced/i,/Siri/i,/Natural|Neural|Online/i,/Evan|Nathan|Aaron|Daniel|Arthur/i,/Google UK English Male|Google US English/i];
+  let v=null;for(const r of pick){v=V.find(x=>r.test(x.name));if(v)break;}if(v)u.voice=v;
   speaking=true;try{rec&&rec.stop();}catch(e){}
   u.onend=u.onerror=()=>{speaking=false;status(on?'Listening':'Ready');if(want)setTimeout(start,250);};
   speechSynthesis.speak(u);
@@ -129,9 +147,9 @@ function fx(){
   function frame(){
     const w=c.clientWidth,h=c.clientHeight,d=devicePixelRatio||1;
     if(c.width!==Math.round(w*d)){c.width=Math.round(w*d);c.height=Math.round(h*d);mk(w,h);}
-    x.setTransform(d,0,0,d,0,0);x.fillStyle='#020308';x.fillRect(0,0,w,h);t+=.016;
+    x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,w,h);t+=.016;
     x.globalCompositeOperation='lighter';
-    neb.forEach((b,i)=>{const bx=w*(b[0]+.02*Math.sin(t*.07+i)),by=h*(b[1]+.05*Math.sin(t*.05+i*1.7)),r=w*(.16+.03*Math.sin(t*.09+i));
+    if(0)neb.forEach((b,i)=>{const bx=w*(b[0]+.02*Math.sin(t*.07+i)),by=h*(b[1]+.05*Math.sin(t*.05+i*1.7)),r=w*(.16+.03*Math.sin(t*.09+i));
       const g=x.createRadialGradient(bx,by,0,bx,by,r);g.addColorStop(0,`rgba(${b[2]},${b[3]})`);g.addColorStop(.55,`rgba(${b[2]},${b[3]*.35})`);g.addColorStop(1,`rgba(${b[2]},0)`);
       x.fillStyle=g;x.save();x.translate(bx,by);x.scale(1.9,.62);x.translate(-bx,-by);x.fillRect(bx-r,by-r,2*r,2*r);x.restore();});
     stars.forEach(s=>{s[0]-=s[2]*.04;if(s[0]<0)s[0]+=w;const a=.35+.65*Math.abs(Math.sin(t*.8+s[3]));
