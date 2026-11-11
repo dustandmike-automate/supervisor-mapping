@@ -15,6 +15,16 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .hud{position:absolute;left:9%;right:9%;top:14px;display:flex;justify-content:space-between;font:700 10px/1 var(--mono);letter-spacing:.2em;color:rgba(238,243,255,.62)}
 .cc .heard{position:absolute;left:9%;right:9%;bottom:96px;z-index:2;max-height:4.4em;overflow:hidden;font:600 clamp(15px,4.2vw,19px)/1.3 'Orbitron','Chivo',system-ui,sans-serif;letter-spacing:.04em;color:#A98BEF;text-shadow:0 1px 0 #1A1030,0 2px 12px rgba(2,3,8,.95),0 0 18px rgba(124,92,214,.55);word-break:break-word}
 .cc .heard .w{display:inline-block;white-space:pre;transform:skewX(-12deg)}.cc .heard .w.nw{animation:ccW .42s cubic-bezier(.3,1.6,.5,1) both}
+.cc .alrt{position:absolute;inset:8% 7% 10%;z-index:5;display:none;flex-direction:column;gap:10px;padding:16px 18px;background:linear-gradient(180deg,rgba(40,6,12,.94),rgba(12,3,8,.96));border:1px solid #FF4D6D;box-shadow:0 0 0 1px rgba(255,77,109,.25),0 0 40px rgba(255,77,109,.45),inset 0 0 30px rgba(255,77,109,.18);clip-path:polygon(6% 0,94% 0,100% 12%,100% 88%,94% 100%,6% 100%,0 88%,0 12%)}
+.cc .alrt.show{display:flex}.cc .alrt.flash{animation:ccA 1s steps(2,jump-none) infinite}
+@keyframes ccA{50%{border-color:#FFE3E8;box-shadow:0 0 0 1px rgba(255,227,232,.6),0 0 70px rgba(255,77,109,.9),inset 0 0 50px rgba(255,77,109,.35)}}
+.cc .alrt .ah{font:700 11px/1 "Chivo Mono",monospace;letter-spacing:.24em;color:#FF4D6D}
+.cc .alrt .at{flex:1;overflow:auto;font:600 clamp(14px,3.8vw,17px)/1.35 'Orbitron','Chivo',system-ui,sans-serif;color:#FFE3E8}
+.cc .alrt .at .w{display:inline-block;white-space:pre;animation:ccD .38s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes ccD{0%{opacity:0;transform:translateY(-22px)}100%{opacity:1;transform:none}}
+.cc .alrt form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.cc .alrt input{font:500 13px/1.2 "Chivo",system-ui,sans-serif;color:#FFE3E8;background:#12040A;border:1px solid #6B1A2A;border-radius:0;padding:10px;min-width:0}
+.cc .alrt button{font:700 11px/1 "Chivo Mono",monospace;letter-spacing:.16em;padding:0 14px;border:0;border-radius:0;color:#1A0207;background:linear-gradient(180deg,#FF8FA3,#FF4D6D);cursor:pointer}
 @keyframes ccW{0%{opacity:0;transform:skewX(-12deg) translateY(7px)}60%{opacity:1;transform:skewX(-12deg) translateY(-3px)}100%{transform:skewX(-12deg)}}
 .cc .heard i{font-style:normal;color:rgba(169,139,239,.6)}
 .cc .st{position:absolute;left:9%;right:9%;bottom:78px;font:500 11px/1.2 var(--mono);color:var(--gold);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -73,7 +83,7 @@ function mount(){
   host.className='cc';host.setAttribute('aria-label','Command deck');
   host.innerHTML=`<div class="hull">
   <div class="bar"><span class="dot"></span><b>BRIDGE</b><span>COMMAND DECK</span><span class="seg"></span><span id="ccClock"></span></div>
-  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-hidden="true"></canvas><div class="rim"></div>
+  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-hidden="true"></canvas><div class="alrt" id="ccAl" role="alertdialog" aria-labelledby="ccAlH" aria-describedby="ccAlT"><div class="ah" id="ccAlH">HIGH RISK · NEEDS YOU</div><div class="at" id="ccAlT"></div><form id="ccAlF"><input id="ccAlI" maxlength="600" placeholder="Your answer" aria-label="Your answer"><button type="submit">ANSWER</button></form></div><div class="rim"></div>
    <div class="hud"><span id="ccHudL">VOICE</span><span id="ccHudR">CREW</span></div>
    <div class="heard" id="ccHeard" aria-live="polite"><i>Say "brief" to start. Say "command off" to stop.</i></div>
    <div class="st" id="ccSt">Voice starting…</div>
@@ -88,7 +98,7 @@ function mount(){
   keys('#ccM',MODELS,v=>model=v);keys('#ccE',EFF,v=>effort=v);
   $('#ccOrb').onclick=()=>{if(on){want=false;armed=false;stop();}else{want=true;armed=true;start();brief();}};
   $('#ccType').onsubmit=e=>{e.preventDefault();const v=$('#ccIn').value.trim();if(v){buf=v;$('#ccIn').value='';}send();};const py=document.getElementById('bPyr');if(py)py.addEventListener('click',e=>{e.stopImmediatePropagation();brief();},true);$('#ccBrief').onclick=brief;$('#ccClr').onclick=()=>{buf='';interim='';paint();};
-  grip();fx();return true;
+  grip();$('#ccAlF').onsubmit=answerAlert;fx();return true;
 }
 function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y=e=>e.touches?e.touches[0].clientY:e.clientY;
   const st=e=>{e.preventDefault();d=true;y0=Y(e);h0=ta.offsetHeight;},mv=e=>{if(!d)return;e.preventDefault();ta.style.height=Math.max(44,Math.min(innerHeight*.7,h0+Y(e)-y0))+'px';},en=()=>{d=false;};
@@ -96,6 +106,17 @@ function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y
   g.onkeydown=e=>{const k={ArrowUp:-20,ArrowDown:20}[e.key];if(k){e.preventDefault();ta.style.height=Math.max(44,ta.offsetHeight+k)+'px';}};
   ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#ccType').requestSubmit();}};}
 let VOX=[],VN='',SHOWN=0,armed=false;function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
+let alertId='',alertTimer=0;
+function showAlert(a){const box=$('#ccAl');if(!box)return;
+  if(!a||!a.id||a.answered||!a.text){box.className='alrt';alertId='';clearTimeout(alertTimer);return;}
+  if(a.id===alertId)return;alertId=a.id;const T=$('#ccAlT');T.textContent='';box.className='alrt show flash';
+  const ws=String(a.text).split(/\s+/).filter(Boolean);ws.forEach((w,i)=>{const s=document.createElement('span');s.className='w';s.style.animationDelay=(i*.12)+'s';s.textContent=w+' ';T.appendChild(s);});
+  clearTimeout(alertTimer);alertTimer=setTimeout(()=>box.classList.remove('flash'),ws.length*120+60000);
+  if(armed)say('High risk. '+a.text);}
+async function answerAlert(e){e.preventDefault();const v=$('#ccAlI').value.trim();if(!v||!db||!alertId)return;
+  try{await db.doc('reports/a'+Date.now().toString(36)).set({text:'ALERT '+alertId+': '+v,lane:'intraday',at:Date.now(),fix:''});
+    await db.doc('live/alert').update({answered:true,answer:v,answered_at:Date.now()});$('#ccAlI').value='';showAlert(null);}
+  catch(err){status('Answer not sent: '+(err.message||err.code||'error'));}}
 function paint(){
   document.querySelectorAll('#ccM .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===model));
   document.querySelectorAll('#ccE .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===effort));
@@ -214,6 +235,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   db=await window.SBDB();
   db.doc('live/current').onSnapshot(s=>{live=s.data()||{};});
   db.doc('live/crew').onSnapshot(s=>{crew=s.data()||{};paint();});
+  db.doc('live/alert').onSnapshot(s=>showAlert(s.data()));
   db.collection('reports').onSnapshot(s=>{reports=s.docs.map(d=>d.data());});
   start();
   const once=()=>{document.removeEventListener('pointerdown',once);if(!on){want=true;start();}};
