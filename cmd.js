@@ -46,9 +46,11 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .vp .scan{position:absolute;left:0;right:0;height:38%;background:linear-gradient(180deg,rgba(63,212,255,0),rgba(63,212,255,.07),rgba(63,212,255,0));animation:ccS 9s linear infinite}
 @keyframes ccS{from{top:-40%}to{top:100%}}
 .cc{animation:ccH 7s ease-in-out infinite}@keyframes ccH{50%{filter:drop-shadow(0 0 18px rgba(63,212,255,.28))}}
-.cc .type{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px}
-.cc .type input{font:500 13px/1.2 var(--display);color:var(--pearl);background:#070B12;border:1px solid #1E2A3C;border-radius:0;padding:10px}
-.cc .type input:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 1px rgba(63,212,255,.35)}
+.cc .type{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:start}
+.cc .taW{position:relative}.cc .taW textarea{display:block;width:100%;min-height:44px;resize:none;padding-right:28px!important}
+.cc .grip{position:absolute;right:2px;bottom:2px;width:24px;height:24px;cursor:ns-resize;touch-action:none;background:linear-gradient(135deg,transparent 45%,#3FD4FF 45%,#3FD4FF 52%,transparent 52%,transparent 62%,#3FD4FF 62%,#3FD4FF 69%,transparent 69%,transparent 79%,#3FD4FF 79%,#3FD4FF 86%,transparent 86%)}
+.cc .type textarea{font:500 13px/1.2 var(--display);color:var(--pearl);background:#070B12;border:1px solid #1E2A3C;border-radius:0;padding:10px}
+.cc .type textarea:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 1px rgba(63,212,255,.35)}
 body{background:radial-gradient(90% 60% at 50% 0%,#0B1424 0%,#03050A 70%) fixed #03050A!important;color:#EEF3FF}
 #names,#namesTab,#bSpeak,#spkMsg,main>*:not(#cc):not(#pyrWrap){display:none!important}
 main{display:flex!important;flex-direction:column;gap:6px;max-width:560px;margin:0 auto}
@@ -73,7 +75,7 @@ function mount(){
    <button class="orb off" id="ccOrb" type="button" aria-label="Voice on or off"></button></div></div>
   <div class="cons" id="ccCons" aria-label="Agent consoles">${AG.map(([k,l])=>`<div class="con" data-k="${k}" data-s="idle"><div class="in"><canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="nm">${l.toUpperCase()}</div><div class="nt"></div></div></div><span class="ln"></span></div>`).join('')}</div>
   <div class="keys"><div class="kl">DELEGATE TO</div><div class="row" id="ccM"></div><div class="kl">EFFORT</div><div class="row" id="ccE"></div>
-   <form class="type" id="ccType"><input id="ccIn" maxlength="600" placeholder="Speak, or type a command" aria-label="Type a command"><button class="k go" id="ccSend" type="submit">Send</button></form>
+   <form class="type" id="ccType"><div class="taW"><textarea id="ccIn" maxlength="600" rows="2" placeholder="Speak, or type a command" aria-label="Type a command"></textarea><span class="grip" id="ccGrip" role="separator" aria-label="Drag to resize the command box" aria-orientation="horizontal" tabindex="0"></span></div><button class="k go" id="ccSend" type="submit">Send</button></form>
    <div class="row" style="margin-top:4px"><button class="k" id="ccBrief" type="button">Brief</button><button class="k" id="ccClr" type="button">Clear</button></div>
    <div class="help">Voice words: brief · send · clear · mute. Say a model and an effort to delegate.</div></div>
   <div class="floor"></div></div>`;
@@ -81,14 +83,20 @@ function mount(){
   keys('#ccM',MODELS,v=>model=v);keys('#ccE',EFF,v=>effort=v);
   $('#ccOrb').onclick=()=>{if(on){want=false;stop();}else{want=true;start();brief();}};
   $('#ccType').onsubmit=e=>{e.preventDefault();const v=$('#ccIn').value.trim();if(v){buf=v;$('#ccIn').value='';}send();};const py=document.getElementById('bPyr');if(py)py.addEventListener('click',e=>{e.stopImmediatePropagation();brief();},true);$('#ccBrief').onclick=brief;$('#ccClr').onclick=()=>{buf='';interim='';paint();};
-  fx();return true;
+  grip();fx();return true;
 }
+function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y=e=>e.touches?e.touches[0].clientY:e.clientY;
+  const st=e=>{e.preventDefault();d=true;y0=Y(e);h0=ta.offsetHeight;},mv=e=>{if(!d)return;e.preventDefault();ta.style.height=Math.max(44,Math.min(innerHeight*.7,h0+Y(e)-y0))+'px';},en=()=>{d=false;};
+  g.addEventListener('mousedown',st);g.addEventListener('touchstart',st,{passive:false});addEventListener('mousemove',mv);addEventListener('touchmove',mv,{passive:false});addEventListener('mouseup',en);addEventListener('touchend',en);
+  g.onkeydown=e=>{const k={ArrowUp:-20,ArrowDown:20}[e.key];if(k){e.preventDefault();ta.style.height=Math.max(44,ta.offsetHeight+k)+'px';}};
+  ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#ccType').requestSubmit();}};}
+let VOX=[],VN='';function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
 function paint(){
   document.querySelectorAll('#ccM .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===model));
   document.querySelectorAll('#ccE .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===effort));
   const h=$('#ccHeard');if(!h)return;
   if(buf||interim){h.textContent=buf;if(interim){const i=document.createElement('i');i.textContent=' '+interim;h.appendChild(i);}}
-  $('#ccOrb').className='orb '+(on?'on':'off');$('#ccHudL').textContent=on?'VOICE · LIVE':'VOICE · OFF';
+  $('#ccOrb').className='orb '+(on?'on':'off');$('#ccHudL').textContent=(on?'VOICE · LIVE':'VOICE · OFF')+(VN?' · '+VN:'');
   const N=crew.nodes||{};let run=0;
   document.querySelectorAll('#ccCons .con').forEach(c=>{const d=N[c.dataset.k]||{};c.dataset.s=d.s||'idle';c.querySelector('.nt').textContent=d.n||'standing by';if(d.s==='run')run++;});
   $('#ccHudR').textContent=run+' RUNNING';
@@ -134,8 +142,8 @@ function brief(){
 function say(t){
   status(t);if(!window.speechSynthesis)return;
   speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.94;u.pitch=.88;
-  const V=speechSynthesis.getVoices().filter(v=>/^en[-_](US|GB)/.test(v.lang)),pick=[/Premium/i,/Enhanced/i,/Siri/i,/Natural|Neural|Online/i,/Evan|Nathan|Aaron|Daniel|Arthur/i,/Google UK English Male|Google US English/i];
-  let v=null;for(const r of pick){v=V.find(x=>r.test(x.name));if(v)break;}if(v)u.voice=v;
+  loadV();const V=VOX.filter(v=>/^en/i.test(v.lang)),pick=[/Premium/i,/Enhanced/i,/Siri/i,/Natural|Neural|Online/i,/Evan|Nathan|Aaron|Daniel|Arthur/i,/Google UK English Male|Google US English/i];
+  let v=null;for(const r of pick){v=V.find(x=>r.test(x.name));if(v)break;}if(v){u.voice=v;VN=v.name.replace(/\s*\(.*\)/,'').toUpperCase();paint();}
   speaking=true;try{rec&&rec.stop();}catch(e){}
   u.onend=u.onerror=()=>{speaking=false;status(on?'Listening':'Ready');if(want)setTimeout(start,250);};
   speechSynthesis.speak(u);
