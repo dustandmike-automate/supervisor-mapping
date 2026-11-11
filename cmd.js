@@ -13,14 +13,14 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .vp canvas{position:absolute;inset:0;width:100%;height:100%}
 .cc .vp .rim{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 40px rgba(2,3,8,.95),inset 0 1px 0 rgba(63,212,255,.35)}
 .cc .hud{position:absolute;left:9%;right:9%;top:14px;display:flex;justify-content:space-between;font:700 10px/1 var(--mono);letter-spacing:.2em;color:rgba(238,243,255,.62)}
-.cc .heard{position:absolute;left:9%;right:9%;bottom:96px;z-index:2;max-height:4.4em;overflow:hidden;font:600 clamp(17px,4.6vw,21px)/1.25 'Rajdhani',var(--display);letter-spacing:.03em;color:#A98BEF;text-shadow:0 1px 0 #1A1030,0 2px 12px rgba(2,3,8,.95),0 0 18px rgba(124,92,214,.55);word-break:break-word}
-.cc .heard .w{display:inline-block;white-space:pre}.cc .heard .w.nw{animation:ccW .42s cubic-bezier(.3,1.6,.5,1) both}
-@keyframes ccW{0%{opacity:0;transform:translateY(7px)}60%{opacity:1;transform:translateY(-3px)}100%{transform:none}}
+.cc .heard{position:absolute;left:9%;right:9%;bottom:96px;z-index:2;max-height:4.4em;overflow:hidden;font:600 clamp(15px,4.2vw,19px)/1.3 'Orbitron','Chivo',system-ui,sans-serif;letter-spacing:.04em;color:#A98BEF;text-shadow:0 1px 0 #1A1030,0 2px 12px rgba(2,3,8,.95),0 0 18px rgba(124,92,214,.55);word-break:break-word}
+.cc .heard .w{display:inline-block;white-space:pre;transform:skewX(-12deg)}.cc .heard .w.nw{animation:ccW .42s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes ccW{0%{opacity:0;transform:skewX(-12deg) translateY(7px)}60%{opacity:1;transform:skewX(-12deg) translateY(-3px)}100%{transform:skewX(-12deg)}}
 .cc .heard i{font-style:normal;color:rgba(169,139,239,.6)}
 .cc .st{position:absolute;left:9%;right:9%;bottom:78px;font:500 11px/1.2 var(--mono);color:var(--gold);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc .orb{position:absolute;left:50%;bottom:8px;z-index:3;transform:translateX(-50%);width:70px;height:66px;padding:0;border:0;background:none;cursor:pointer;filter:drop-shadow(0 0 14px rgba(63,212,255,.55))}
 .cc .orb svg{width:100%;height:100%;overflow:visible}.cc .orb .tet{transform-origin:35px 40px}
-.cc .orb.on .tet{animation:ccT 6s ease-in-out infinite}.cc .orb.on{animation:ccG 2s ease-out infinite}.cc .orb.off{filter:saturate(.2) brightness(.5)}
+.cc .orb.on{filter:saturate(.6) brightness(.8) drop-shadow(0 0 8px rgba(63,212,255,.35))}.cc .orb.on.arm .tet{animation:ccT 6s ease-in-out infinite}.cc .orb.on.arm{animation:ccG 2s ease-out infinite;filter:none}.cc .orb.off{filter:saturate(.2) brightness(.5)}
 @keyframes ccT{0%,100%{transform:rotate(0) scale(1)}25%{transform:rotate(-4deg) scale(1.04)}50%{transform:rotate(0) scale(1)}75%{transform:rotate(4deg) scale(1.04)}}
 @keyframes ccG{50%{filter:drop-shadow(0 0 26px rgba(63,212,255,.9))}}
 @keyframes ccP{0%{box-shadow:0 0 0 6px rgba(4,6,10,.85),0 0 0 6px rgba(63,212,255,.5),0 0 28px rgba(63,212,255,.55)}100%{box-shadow:0 0 0 6px rgba(4,6,10,.85),0 0 0 26px rgba(63,212,255,0),0 0 28px rgba(63,212,255,.55)}}
@@ -69,24 +69,24 @@ let db,live={},crew={},reports=[],rec,on=false,want=true,speaking=false,buf='',i
 const $=s=>document.querySelector(s);
 function mount(){
   const host=document.getElementById('cc');if(!host)return false;
-  const fl=document.createElement('link');fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap';document.head.appendChild(fl);const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
+  const fl=document.createElement('link');fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&display=swap';document.head.appendChild(fl);const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
   host.className='cc';host.setAttribute('aria-label','Command deck');
   host.innerHTML=`<div class="hull">
   <div class="bar"><span class="dot"></span><b>BRIDGE</b><span>COMMAND DECK</span><span class="seg"></span><span id="ccClock"></span></div>
   <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-hidden="true"></canvas><div class="rim"></div>
    <div class="hud"><span id="ccHudL">VOICE</span><span id="ccHudR">CREW</span></div>
-   <div class="heard" id="ccHeard" aria-live="polite"><i>Say "brief" for the state. Speak a task, then say "send".</i></div>
+   <div class="heard" id="ccHeard" aria-live="polite"><i>Say "brief" to start. Say "command off" to stop.</i></div>
    <div class="st" id="ccSt">Voice starting…</div>
    <button class="orb off" id="ccOrb" type="button" aria-label="Voice on or off"><svg viewBox="0 0 70 66" aria-hidden="true"><defs><linearGradient id="tA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#BFF3FF"/><stop offset="1" stop-color="#3FD4FF"/></linearGradient><linearGradient id="tB" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3FD4FF"/><stop offset="1" stop-color="#2F6BFF"/></linearGradient><linearGradient id="tC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F6BFF"/><stop offset="1" stop-color="#0A1530"/></linearGradient></defs><g class="tet" stroke="#BFF3FF" stroke-width=".8" stroke-linejoin="round"><polygon points="35,2 4,58 35,44" fill="url(#tA)"/><polygon points="35,2 66,58 35,44" fill="url(#tB)"/><polygon points="4,58 66,58 35,44" fill="url(#tC)"/></g></svg></button></div></div>
   <div class="cons" id="ccCons" aria-label="Agent consoles">${AG.map(([k,l])=>`<div class="con" data-k="${k}" data-s="idle"><div class="in"><canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="nm">${l.toUpperCase()}</div><div class="nt"></div></div></div><span class="ln"></span></div>`).join('')}</div>
   <div class="keys"><div class="kl">DELEGATE TO</div><div class="row" id="ccM"></div><div class="kl">EFFORT</div><div class="row" id="ccE"></div>
    <form class="type" id="ccType"><div class="taW"><textarea id="ccIn" maxlength="600" rows="2" placeholder="Speak, or type a command" aria-label="Type a command"></textarea><span class="grip" id="ccGrip" role="separator" aria-label="Drag to resize the command box" aria-orientation="horizontal" tabindex="0"></span></div><button class="k go" id="ccSend" type="submit">Send</button></form>
    <div class="row" style="margin-top:4px"><button class="k" id="ccBrief" type="button">Brief</button><button class="k" id="ccClr" type="button">Clear</button></div>
-   <div class="help">Voice words: brief · send · clear · mute. Say a model and an effort to delegate.</div></div>
+   <div class="help">Say “brief” to start command mode; it stays on until “command off”. In command mode: send · clear · a model and an effort to delegate.</div></div>
   <div class="floor"></div></div>`;
   const keys=(id,list,set)=>{const el=$(id);el.innerHTML=list.map(v=>`<button type="button" class="k" data-v="${v}">${v==='orchestrator'?'orch':v}</button>`).join('');el.onclick=e=>{const v=e.target.dataset&&e.target.dataset.v;if(v){set(v);paint();}};};
   keys('#ccM',MODELS,v=>model=v);keys('#ccE',EFF,v=>effort=v);
-  $('#ccOrb').onclick=()=>{if(on){want=false;stop();}else{want=true;start();brief();}};
+  $('#ccOrb').onclick=()=>{if(on){want=false;armed=false;stop();}else{want=true;armed=true;start();brief();}};
   $('#ccType').onsubmit=e=>{e.preventDefault();const v=$('#ccIn').value.trim();if(v){buf=v;$('#ccIn').value='';}send();};const py=document.getElementById('bPyr');if(py)py.addEventListener('click',e=>{e.stopImmediatePropagation();brief();},true);$('#ccBrief').onclick=brief;$('#ccClr').onclick=()=>{buf='';interim='';paint();};
   grip();fx();return true;
 }
@@ -95,13 +95,13 @@ function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y
   g.addEventListener('mousedown',st);g.addEventListener('touchstart',st,{passive:false});addEventListener('mousemove',mv);addEventListener('touchmove',mv,{passive:false});addEventListener('mouseup',en);addEventListener('touchend',en);
   g.onkeydown=e=>{const k={ArrowUp:-20,ArrowDown:20}[e.key];if(k){e.preventDefault();ta.style.height=Math.max(44,ta.offsetHeight+k)+'px';}};
   ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#ccType').requestSubmit();}};}
-let VOX=[],VN='',SHOWN=0;function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
+let VOX=[],VN='',SHOWN=0,armed=false;function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
 function paint(){
   document.querySelectorAll('#ccM .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===model));
   document.querySelectorAll('#ccE .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===effort));
   const h=$('#ccHeard');if(!h)return;
   if(buf||interim){const ws=buf.split(/\s+/).filter(Boolean);h.textContent='';ws.forEach((w,k)=>{const sp=document.createElement('span');sp.className='w'+(k>=SHOWN?' nw':'');sp.textContent=w+' ';h.appendChild(sp);});SHOWN=ws.length;if(interim){const i=document.createElement('i');i.textContent=interim;h.appendChild(i);}}else SHOWN=0;
-  $('#ccOrb').className='orb '+(on?'on':'off');$('#ccHudL').textContent=(on?'VOICE · LIVE':'VOICE · OFF')+(VN?' · '+VN:'');
+  $('#ccOrb').className='orb '+(on?'on':'off');$('#ccHudL').textContent=(!on?'VOICE · OFF':armed?'VOICE · COMMAND':'VOICE · STANDBY')+(VN?' · '+VN:'');$('#ccOrb').classList.toggle('arm',armed);
   const N=crew.nodes||{};let run=0;
   document.querySelectorAll('#ccCons .con').forEach(c=>{const d=N[c.dataset.k]||{};c.dataset.s=d.s||'idle';c.querySelector('.nt').textContent=d.n||'standing by';if(d.s==='run')run++;});
   $('#ccHudR').textContent=run+' RUNNING';
@@ -115,12 +115,14 @@ function start(){
   rec.onstart=()=>{on=true;status('Listening');paint();};
   rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){want=false;status('Tap the orb to allow the microphone');}};
   rec.onend=()=>{on=false;paint();if(want&&!speaking)setTimeout(start,400);};
-  rec.onresult=e=>{interim='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i],t=r[0].transcript.trim();if(r.isFinal)heard(t);else interim+=t+' ';}paint();};
+  rec.onresult=e=>{interim='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i],t=r[0].transcript.trim();if(r.isFinal)heard(t);else if(armed)interim+=t+' ';}paint();};
   try{rec.start();}catch(e){}
 }
 function stop(){try{rec&&rec.stop();}catch(e){}on=false;status('Voice off · tap the orb');paint();}
 function heard(t){
   const w=t.toLowerCase().replace(/[.,!?]/g,'').trim();
+  if(/\bcommands? off\b/.test(w)){armed=false;buf='';interim='';paint();return say('Command off. Say brief to start.');}
+  if(!armed){if(/\bbrief\b/.test(w)){armed=true;paint();return brief();}return;}
   if(/^(brief|brief me|status|state)$/.test(w))return brief();
   if(/^(clear|cancel|scratch that)$/.test(w)){buf='';return;}
   if(/^(mute|stop listening|voice off)$/.test(w)){want=false;return stop();}
