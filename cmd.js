@@ -13,11 +13,16 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .vp canvas{position:absolute;inset:0;width:100%;height:100%}
 .cc .vp .rim{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 40px rgba(2,3,8,.95),inset 0 1px 0 rgba(63,212,255,.35)}
 .cc .hud{position:absolute;left:9%;right:9%;top:14px;display:flex;justify-content:space-between;font:700 10px/1 var(--mono);letter-spacing:.2em;color:rgba(238,243,255,.62)}
-.cc .heard{position:absolute;left:9%;right:9%;bottom:96px;max-height:4.2em;overflow:hidden;font:700 clamp(15px,4.2vw,18px)/1.3 var(--display);color:var(--pearl);text-shadow:0 2px 14px rgba(2,3,8,.9),0 0 24px rgba(63,212,255,.35);word-break:break-word}
-.cc .heard i{font-style:normal;color:rgba(234,217,166,.85)}
+.cc .heard{position:absolute;left:9%;right:9%;bottom:96px;z-index:2;max-height:4.4em;overflow:hidden;font:600 clamp(17px,4.6vw,21px)/1.25 'Rajdhani',var(--display);letter-spacing:.03em;color:#A98BEF;text-shadow:0 1px 0 #1A1030,0 2px 12px rgba(2,3,8,.95),0 0 18px rgba(124,92,214,.55);word-break:break-word}
+.cc .heard .w{display:inline-block;white-space:pre}.cc .heard .w.nw{animation:ccW .42s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes ccW{0%{opacity:0;transform:translateY(7px)}60%{opacity:1;transform:translateY(-3px)}100%{transform:none}}
+.cc .heard i{font-style:normal;color:rgba(169,139,239,.6)}
 .cc .st{position:absolute;left:9%;right:9%;bottom:78px;font:500 11px/1.2 var(--mono);color:var(--gold);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cc .orb{position:absolute;left:50%;bottom:12px;z-index:2;transform:translateX(-50%);width:62px;height:62px;border-radius:50%;cursor:pointer;border:1px solid rgba(63,212,255,.8);background:radial-gradient(circle at 50% 35%,#BFF3FF 0%,var(--edge) 18%,var(--saph) 48%,#0A1530 78%);box-shadow:0 0 0 6px rgba(4,6,10,.85),0 0 28px rgba(63,212,255,.55)}
-.cc .orb.on{animation:ccP 2s ease-out infinite}.cc .orb.off{filter:saturate(.25) brightness(.55)}
+.cc .orb{position:absolute;left:50%;bottom:8px;z-index:3;transform:translateX(-50%);width:70px;height:66px;padding:0;border:0;background:none;cursor:pointer;filter:drop-shadow(0 0 14px rgba(63,212,255,.55))}
+.cc .orb svg{width:100%;height:100%;overflow:visible}.cc .orb .tet{transform-origin:35px 40px}
+.cc .orb.on .tet{animation:ccT 6s ease-in-out infinite}.cc .orb.on{animation:ccG 2s ease-out infinite}.cc .orb.off{filter:saturate(.2) brightness(.5)}
+@keyframes ccT{0%,100%{transform:rotate(0) scale(1)}25%{transform:rotate(-4deg) scale(1.04)}50%{transform:rotate(0) scale(1)}75%{transform:rotate(4deg) scale(1.04)}}
+@keyframes ccG{50%{filter:drop-shadow(0 0 26px rgba(63,212,255,.9))}}
 @keyframes ccP{0%{box-shadow:0 0 0 6px rgba(4,6,10,.85),0 0 0 6px rgba(63,212,255,.5),0 0 28px rgba(63,212,255,.55)}100%{box-shadow:0 0 0 6px rgba(4,6,10,.85),0 0 0 26px rgba(63,212,255,0),0 0 28px rgba(63,212,255,.55)}}
 .cc .cons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;perspective:700px;margin-top:6px}
 .cc .con{position:relative;padding:1px;background:linear-gradient(180deg,#2B3A52,#0B1018 60%);clip-path:${CS};transform:rotateX(9deg);transform-origin:50% 100%}
@@ -64,15 +69,15 @@ let db,live={},crew={},reports=[],rec,on=false,want=true,speaking=false,buf='',i
 const $=s=>document.querySelector(s);
 function mount(){
   const host=document.getElementById('cc');if(!host)return false;
-  const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
+  const fl=document.createElement('link');fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap';document.head.appendChild(fl);const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
   host.className='cc';host.setAttribute('aria-label','Command deck');
   host.innerHTML=`<div class="hull">
   <div class="bar"><span class="dot"></span><b>BRIDGE</b><span>COMMAND DECK</span><span class="seg"></span><span id="ccClock"></span></div>
-  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><div class="rim"></div>
+  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-hidden="true"></canvas><div class="rim"></div>
    <div class="hud"><span id="ccHudL">VOICE</span><span id="ccHudR">CREW</span></div>
    <div class="heard" id="ccHeard" aria-live="polite"><i>Say "brief" for the state. Speak a task, then say "send".</i></div>
    <div class="st" id="ccSt">Voice starting…</div>
-   <button class="orb off" id="ccOrb" type="button" aria-label="Voice on or off"></button></div></div>
+   <button class="orb off" id="ccOrb" type="button" aria-label="Voice on or off"><svg viewBox="0 0 70 66" aria-hidden="true"><defs><linearGradient id="tA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#BFF3FF"/><stop offset="1" stop-color="#3FD4FF"/></linearGradient><linearGradient id="tB" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3FD4FF"/><stop offset="1" stop-color="#2F6BFF"/></linearGradient><linearGradient id="tC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F6BFF"/><stop offset="1" stop-color="#0A1530"/></linearGradient></defs><g class="tet" stroke="#BFF3FF" stroke-width=".8" stroke-linejoin="round"><polygon points="35,2 4,58 35,44" fill="url(#tA)"/><polygon points="35,2 66,58 35,44" fill="url(#tB)"/><polygon points="4,58 66,58 35,44" fill="url(#tC)"/></g></svg></button></div></div>
   <div class="cons" id="ccCons" aria-label="Agent consoles">${AG.map(([k,l])=>`<div class="con" data-k="${k}" data-s="idle"><div class="in"><canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="nm">${l.toUpperCase()}</div><div class="nt"></div></div></div><span class="ln"></span></div>`).join('')}</div>
   <div class="keys"><div class="kl">DELEGATE TO</div><div class="row" id="ccM"></div><div class="kl">EFFORT</div><div class="row" id="ccE"></div>
    <form class="type" id="ccType"><div class="taW"><textarea id="ccIn" maxlength="600" rows="2" placeholder="Speak, or type a command" aria-label="Type a command"></textarea><span class="grip" id="ccGrip" role="separator" aria-label="Drag to resize the command box" aria-orientation="horizontal" tabindex="0"></span></div><button class="k go" id="ccSend" type="submit">Send</button></form>
@@ -90,12 +95,12 @@ function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y
   g.addEventListener('mousedown',st);g.addEventListener('touchstart',st,{passive:false});addEventListener('mousemove',mv);addEventListener('touchmove',mv,{passive:false});addEventListener('mouseup',en);addEventListener('touchend',en);
   g.onkeydown=e=>{const k={ArrowUp:-20,ArrowDown:20}[e.key];if(k){e.preventDefault();ta.style.height=Math.max(44,ta.offsetHeight+k)+'px';}};
   ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#ccType').requestSubmit();}};}
-let VOX=[],VN='';function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
+let VOX=[],VN='',SHOWN=0;function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
 function paint(){
   document.querySelectorAll('#ccM .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===model));
   document.querySelectorAll('#ccE .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===effort));
   const h=$('#ccHeard');if(!h)return;
-  if(buf||interim){h.textContent=buf;if(interim){const i=document.createElement('i');i.textContent=' '+interim;h.appendChild(i);}}
+  if(buf||interim){const ws=buf.split(/\s+/).filter(Boolean);h.textContent='';ws.forEach((w,k)=>{const sp=document.createElement('span');sp.className='w'+(k>=SHOWN?' nw':'');sp.textContent=w+' ';h.appendChild(sp);});SHOWN=ws.length;if(interim){const i=document.createElement('i');i.textContent=interim;h.appendChild(i);}}else SHOWN=0;
   $('#ccOrb').className='orb '+(on?'on':'off');$('#ccHudL').textContent=(on?'VOICE · LIVE':'VOICE · OFF')+(VN?' · '+VN:'');
   const N=crew.nodes||{};let run=0;
   document.querySelectorAll('#ccCons .con').forEach(c=>{const d=N[c.dataset.k]||{};c.dataset.s=d.s||'idle';c.querySelector('.nt').textContent=d.n||'standing by';if(d.s==='run')run++;});
@@ -152,6 +157,33 @@ function fx(){
   const c=document.getElementById('ccFx'),x=c.getContext('2d');let t=0,stars=[];
   const mk=(w,h)=>{stars=[];for(let i=0;i<260;i++)stars.push([Math.random()*w,Math.random()*h,Math.random()*1.2+.2,Math.random()*6.3,Math.random()<.25]);};
   const neb=[[.18,.62,'122,92,255',.30],[.36,.48,'47,107,255',.34],[.55,.56,'63,212,255',.20],[.7,.42,'122,92,255',.30],[.86,.5,'47,107,255',.26],[.62,.52,'234,217,166',.07]];
+
+  const nc=document.getElementById('ccNet'),y=nc.getContext('2d');
+  // Firing sequence: agents + git channel over the bridge image. Live from live/crew (nodes s, chan events).
+  const NP={you:[.17,.42,'YOU'],orch:[.47,.33,'ORCH'],fable:[.31,.56,'FABLE'],watch:[.60,.55,'WATCH'],git:[.76,.21,'GIT'],gov:[.88,.40,'GOV'],loop:[.76,.58,'LOOP']};
+  const LK=[['you','orch'],['orch','fable'],['orch','watch'],['watch','git'],['orch','git'],['git','gov'],['git','loop'],['gov','loop']];
+  let P=[],nextAuto=0,nextReplay=0,ri=0;const C={run:'63,212,255',you:'234,217,166',idle:'110,128,160',git:'198,160,255'};
+  const st=k=>k==='git'?'git':((crew.nodes||{})[k]||{}).s||'idle';
+  const fire=(a,b,col,lab)=>{if(NP[a]&&NP[b])P.push({a,b,t0:t,col,lab});};
+  function net(w,h){const d=devicePixelRatio||1;if(nc.width!==Math.round(w*d)){nc.width=Math.round(w*d);nc.height=Math.round(h*d);}y.setTransform(d,0,0,d,0,0);y.clearRect(0,0,w,h);
+    const N=crew.nodes||{},ev=(crew.chan||[]).filter(e=>e&&NP[e.from]&&NP[e.to]).slice(-8);
+    if(t>nextAuto){nextAuto=t+1.4;LK.forEach(([a,b])=>{const sa=st(a),sb=st(b);if(sa==='run'||sb==='run')fire(sa==='run'?a:b,sa==='run'?b:a,C.run);else if(sa==='you'||sb==='you')fire(sa==='you'?b:a,sa==='you'?a:b,C.you);});}
+    if(ev.length&&t>nextReplay){const e=ev[ri%ev.length];ri++;nextReplay=t+(ri%ev.length?1.1:4);fire(e.from,e.to,C.git,(e.kind||'').toUpperCase());}
+    y.lineWidth=1;LK.forEach(([a,b])=>{const A=NP[a],B=NP[b],hot=st(a)==='run'||st(b)==='run';y.strokeStyle=hot?'rgba(63,212,255,.35)':'rgba(150,170,210,.14)';y.setLineDash(hot?[]:[3,5]);y.beginPath();y.moveTo(A[0]*w,A[1]*h);y.lineTo(B[0]*w,B[1]*h);y.stroke();});y.setLineDash([]);
+    P=P.filter(p=>t-p.t0<1.25);y.globalCompositeOperation='lighter';
+    P.forEach(p=>{const A=NP[p.a],B=NP[p.b],k=Math.min(1,(t-p.t0)/1.0),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      const px=(A[0]+(B[0]-A[0])*e)*w,py=(A[1]+(B[1]-A[1])*e)*h,g=y.createRadialGradient(px,py,0,px,py,14);
+      g.addColorStop(0,`rgba(${p.col},.95)`);g.addColorStop(.3,`rgba(${p.col},.35)`);g.addColorStop(1,`rgba(${p.col},0)`);y.fillStyle=g;y.fillRect(px-14,py-14,28,28);
+      y.strokeStyle=`rgba(${p.col},${.5*(1-k)})`;y.lineWidth=2;y.beginPath();y.moveTo(A[0]*w,A[1]*h);y.lineTo(px,py);y.stroke();
+      if(p.lab&&k<1){y.globalCompositeOperation='source-over';y.font='700 9px "Chivo Mono",monospace';y.fillStyle=`rgba(${p.col},${1-k*.6})`;y.fillText(p.lab,(A[0]+B[0])/2*w+6,(A[1]+B[1])/2*h-6);y.globalCompositeOperation='lighter';}
+      if(k>=.98){const r=6+(t-p.t0-1)*60;y.strokeStyle=`rgba(${p.col},${Math.max(0,.8-(t-p.t0-1)*3)})`;y.beginPath();y.arc(B[0]*w,B[1]*h,r,0,7);y.stroke();}});
+    y.globalCompositeOperation='source-over';
+    Object.entries(NP).forEach(([k,[nx,ny,lab]])=>{const S=st(k),col=C[S]||C.idle,X=nx*w,Y=ny*h,z=k==='git'?9:7,pul=S==='run'||S==='you'?1+.25*Math.sin(t*4):1;
+      y.fillStyle=`rgba(2,3,8,.75)`;y.beginPath();y.arc(X,Y,z+6,0,7);y.fill();y.strokeStyle=`rgba(${col},.35)`;y.lineWidth=1;y.beginPath();y.arc(X,Y,z+6,0,7);y.stroke();
+      y.fillStyle=`rgba(${col},1)`;y.strokeStyle=`rgba(${col},.9)`;y.beginPath();
+      if(k==='git'){for(let i=0;i<6;i++){const a=i*Math.PI/3+Math.PI/6;x[i?'lineTo':'moveTo'](X+Math.cos(a)*z*pul,Y+Math.sin(a)*z*pul);}}else{y.moveTo(X,Y-z*pul);y.lineTo(X+z*pul,Y);y.lineTo(X,Y+z*pul);y.lineTo(X-z*pul,Y);}
+      y.closePath();y.fill();y.font='700 10px "Chivo Mono",monospace';y.textAlign='center';y.shadowColor='rgba(2,3,8,1)';y.shadowBlur=6;y.fillStyle=`rgba(${col},.95)`;y.fillText(lab,X,Y-z-9);y.shadowBlur=0;y.textAlign='start';});
+  }
   function frame(){
     const w=c.clientWidth,h=c.clientHeight,d=devicePixelRatio||1;
     if(c.width!==Math.round(w*d)){c.width=Math.round(w*d);c.height=Math.round(h*d);mk(w,h);}
@@ -162,7 +194,7 @@ function fx(){
       x.fillStyle=g;x.save();x.translate(bx,by);x.scale(1.9,.62);x.translate(-bx,-by);x.fillRect(bx-r,by-r,2*r,2*r);x.restore();});
     stars.forEach(s=>{s[0]-=s[2]*.04;if(s[0]<0)s[0]+=w;const a=.35+.65*Math.abs(Math.sin(t*.8+s[3]));
       x.fillStyle=s[4]?`rgba(191,243,255,${a})`:`rgba(238,243,255,${a*.8})`;x.fillRect(s[0],s[1],s[2],s[2]);});
-    x.globalCompositeOperation='source-over';
+    x.globalCompositeOperation='source-over';net(w,h);
     document.querySelectorAll('#ccCons .con').forEach((con,i)=>{const cv=con.querySelector('canvas'),r=cv.getContext('2d'),S=con.dataset.s,cx=40,cy=40;
       r.clearRect(0,0,80,80);const col=S==='you'?'234,217,166':S==='run'?'63,212,255':'90,108,138';
       for(let k=1;k<=3;k++){r.strokeStyle=`rgba(${col},${S==='idle'?.25:.45})`;r.lineWidth=1.2;r.beginPath();r.arc(cx,cy,k*12,0,7);r.stroke();}
