@@ -246,7 +246,7 @@ function fx(){
     const B=document.createElement('div');B.className='nb';N.appendChild(B);
     if(!sub&&k!=='git'&&k!=='you')btn(B,'CONDUCT',()=>{if(k==='orch'||k==='fable'){model=k==='orch'?'orchestrator':'fable';}const ta=$('#ccIn'),pre=PRE[k]||'';if(ta&&pre&&!ta.value.startsWith(pre))ta.value=pre+ta.value;paint();if(ta)ta.focus();status('Conducting → '+name+'. Speak or type, then send.');},true);
     btn(B,'SPEAK',()=>say(name+'. '+(S==='you'?'Waiting on you':S==='run'?'Running':'Idle')+'. '+(note||'')));
-    if(k!=='you')btn(B,'STATUS',async()=>{if(!db)return say('Sign in first.');try{await db.doc('reports/c'+Date.now().toString(36)).set({text:'Status of '+name+(sub?' (subagent '+sub.id+')':''),lane:'cmd',route:'map',model:'orchestrator',effort:'low',at:Date.now(),fix:''});say('Asked for the status of '+name+'.');}catch(e){say('Not sent.');}});
+    if(k!=='you')btn(B,'STATUS',async()=>{if(!db)return say('Sign in first.');if(Date.now()-(openNode.last||0)<3000)return;openNode.last=Date.now();try{await db.doc('reports/c'+Date.now().toString(36)).set({text:'Status of '+name+(sub?' (subagent '+sub.id+')':''),lane:'cmd',route:'map',model:'orchestrator',effort:'low',at:Date.now(),fix:''});say('Asked for the status of '+name+'.');}catch(e){say('Not sent.');}});
     btn(B,'CLOSE',()=>openNode(null));N.hidden=false;}
   nc.addEventListener('click',e=>{const R=nc.getBoundingClientRect(),px=e.clientX-R.left,py=e.clientY-R.top;let best=null,bd=30;
     [...Object.keys(NP).map(k=>[k,NP[k][0]*R.width,NP[k][1]*R.height]),...subsPos(R.width,R.height).map(o=>[o.id,o.x,o.y])].forEach(([k,X,Y])=>{const d=Math.hypot(X-px,Y-py);if(d<bd){bd=d;best=k;}});
