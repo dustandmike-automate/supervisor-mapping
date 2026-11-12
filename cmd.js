@@ -16,7 +16,7 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .heard{position:absolute;left:9%;right:9%;bottom:96px;z-index:2;max-height:4.4em;overflow:hidden;font:600 clamp(15px,4.2vw,19px)/1.3 'Orbitron','Chivo',system-ui,sans-serif;letter-spacing:.04em;color:#A98BEF;text-shadow:0 1px 0 #1A1030,0 2px 12px rgba(2,3,8,.95),0 0 18px rgba(124,92,214,.55);word-break:break-word}
 .cc .heard .w{display:inline-block;white-space:pre;transform:skewX(-12deg)}.cc .heard .w.nw{animation:ccW .42s cubic-bezier(.3,1.6,.5,1) both}
 .cc .alrt{position:absolute;inset:8% 7% 10%;z-index:5;display:none;flex-direction:column;gap:10px;padding:16px 18px;background:linear-gradient(180deg,rgba(40,6,12,.94),rgba(12,3,8,.96));border:1px solid #FF4D6D;box-shadow:0 0 0 1px rgba(255,77,109,.25),0 0 40px rgba(255,77,109,.45),inset 0 0 30px rgba(255,77,109,.18);clip-path:polygon(6% 0,94% 0,100% 12%,100% 88%,94% 100%,6% 100%,0 88%,0 12%)}
-.cc .alrt.show{display:flex}.cc .alrt.flash{animation:ccA 1s steps(2,jump-none) infinite}
+.cc .alrt.show{display:flex}#ccNet{cursor:crosshair;touch-action:manipulation}.nd{position:absolute;left:9%;right:9%;bottom:7%;z-index:4;padding:10px 12px;background:rgba(4,6,10,.9);border:1px solid rgba(63,212,255,.55);box-shadow:0 0 24px rgba(63,212,255,.25);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%,0 10px);font:500 11px/1.35 "Chivo Mono",monospace;color:#BFD3F2}.nd[hidden]{display:none}.nd .nh{display:flex;justify-content:space-between;gap:8px;font:700 12px/1 "Orbitron","Chivo",sans-serif;letter-spacing:.14em;color:#EEF3FF;margin-bottom:6px}.nd .nh i{font-style:normal;color:#3FD4FF}.nd .nn{color:#EEF3FF;margin-bottom:4px}.nd .ne{color:#C6A0FF;opacity:.9}.nd .nb{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.nd .nb button{font:700 10px/1 "Chivo Mono",monospace;letter-spacing:.16em;padding:8px 10px;border:1px solid #2A3A52;border-radius:0;background:#0B1018;color:#BFF3FF;cursor:pointer}.nd .nb button.pri{background:linear-gradient(180deg,#3FD4FF,#2F6BFF);color:#020308;border-color:#3FD4FF}.cc .alrt.flash{animation:ccA 1s steps(2,jump-none) infinite}
 @keyframes ccA{50%{border-color:#FFE3E8;box-shadow:0 0 0 1px rgba(255,227,232,.6),0 0 70px rgba(255,77,109,.9),inset 0 0 50px rgba(255,77,109,.35)}}
 .cc .alrt .ah{font:700 11px/1 "Chivo Mono",monospace;letter-spacing:.24em;color:#FF4D6D}
 .cc .alrt .at{flex:1;overflow:auto;font:600 clamp(14px,3.8vw,17px)/1.35 'Orbitron','Chivo',system-ui,sans-serif;color:#FFE3E8}
@@ -83,7 +83,7 @@ function mount(){
   host.className='cc';host.setAttribute('aria-label','Command deck');
   host.innerHTML=`<div class="hull">
   <div class="bar"><span class="dot"></span><b>BRIDGE</b><span>COMMAND DECK</span><span class="seg"></span><span id="ccClock"></span></div>
-  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-hidden="true"></canvas><div class="alrt" id="ccAl" role="alertdialog" aria-labelledby="ccAlH" aria-describedby="ccAlT"><div class="ah" id="ccAlH">HIGH RISK · NEEDS YOU</div><div class="at" id="ccAlT"></div><div class="av" id="ccAlV" aria-live="polite"></div><form id="ccAlF"><input id="ccAlI" maxlength="600" placeholder="Your answer" aria-label="Your answer"><button type="submit">ANSWER</button></form></div><div class="rim"></div>
+  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-label="Agent network: tap a node to conduct it"></canvas><div class="nd" id="ccNd" hidden></div><div class="alrt" id="ccAl" role="alertdialog" aria-labelledby="ccAlH" aria-describedby="ccAlT"><div class="ah" id="ccAlH">HIGH RISK · NEEDS YOU</div><div class="at" id="ccAlT"></div><div class="av" id="ccAlV" aria-live="polite"></div><form id="ccAlF"><input id="ccAlI" maxlength="600" placeholder="Your answer" aria-label="Your answer"><button type="submit">ANSWER</button></form></div><div class="rim"></div>
    <div class="hud"><span id="ccHudL">VOICE</span><span id="ccHudR">CREW</span></div>
    <div class="heard" id="ccHeard" aria-live="polite"><i>Say "brief" to start. Say "command off" to stop.</i></div>
    <div class="st" id="ccSt">Voice starting…</div>
@@ -218,7 +218,39 @@ function fx(){
       y.fillStyle=`rgba(${col},1)`;y.strokeStyle=`rgba(${col},.9)`;y.beginPath();
       if(k==='git'){for(let i=0;i<6;i++){const a=i*Math.PI/3+Math.PI/6;x[i?'lineTo':'moveTo'](X+Math.cos(a)*z*pul,Y+Math.sin(a)*z*pul);}}else{y.moveTo(X,Y-z*pul);y.lineTo(X+z*pul,Y);y.lineTo(X,Y+z*pul);y.lineTo(X-z*pul,Y);}
       y.closePath();y.fill();y.font='700 10px "Chivo Mono",monospace';y.textAlign='center';y.shadowColor='rgba(2,3,8,1)';y.shadowBlur=6;y.fillStyle=`rgba(${col},.95)`;y.fillText(lab,X,Y-z-9);y.shadowBlur=0;y.textAlign='start';});
+    drawConductor(w,h);
   }
+  let sel=null,LW=1,LH=1;const NAME={you:'You',orch:'Orchestrator',fable:'Fable',watch:'Watcher',git:'Git channel',gov:'Governor',loop:'Cloud loop'};
+  const PRE={gov:'To governor: ',loop:'To cloud loop: ',watch:'Watcher: '};
+  function subsPos(w,h){const L=(crew.subs||[]).filter(q=>q&&q.id).slice(0,6),O=NP.orch,R=Math.min(w,h)*.17;
+    return L.map((q,i)=>{const a=-Math.PI/2+i*2*Math.PI/Math.max(L.length,1)+t*.12;return {q,id:'sub:'+q.id,x:O[0]*w+Math.cos(a)*R*1.5,y:O[1]*h+Math.sin(a)*R};});}
+  function posOf(k){if(NP[k])return [NP[k][0]*LW,NP[k][1]*LH];const S=subsPos(LW,LH).find(o=>o.id===k);return S?[S.x,S.y]:null;}
+  function drawConductor(w,h){LW=w;LH=h;const O=NP.orch,ox=O[0]*w,oy=O[1]*h;
+    subsPos(w,h).forEach((o,i)=>{const run=(o.q.s||'run')==='run',col=run?C.run:C.idle;
+      y.strokeStyle=`rgba(${col},.28)`;y.setLineDash([2,4]);y.beginPath();y.moveTo(ox,oy);y.lineTo(o.x,o.y);y.stroke();y.setLineDash([]);
+      if(run){const k=(t*.7+i*.31)%1;y.fillStyle=`rgba(${col},.95)`;y.beginPath();y.arc(ox+(o.x-ox)*k,oy+(o.y-oy)*k,2.2,0,7);y.fill();}
+      const z=4.5*(run?1+.2*Math.sin(t*5+i):1);y.fillStyle=`rgba(2,3,8,.8)`;y.beginPath();y.arc(o.x,o.y,z+5,0,7);y.fill();
+      y.fillStyle=`rgba(${col},1)`;y.beginPath();y.arc(o.x,o.y,z,0,7);y.fill();
+      y.font='700 9px "Chivo Mono",monospace';y.textAlign='center';y.shadowColor='rgba(2,3,8,1)';y.shadowBlur=6;y.fillStyle=`rgba(${col},.95)`;
+      y.fillText(String(o.q.label||o.q.model||'SUB').toUpperCase().slice(0,14),o.x,o.y+z+13);y.shadowBlur=0;y.textAlign='start';});
+    if(sel){const p=posOf(sel);if(!p){openNode(null);return;}const r=16+3*Math.sin(t*4);y.strokeStyle='rgba(238,243,255,.9)';y.lineWidth=1.5;
+      y.beginPath();for(let i=0;i<4;i++){const a0=i*Math.PI/2+t*.8;y.moveTo(p[0]+Math.cos(a0)*r,p[1]+Math.sin(a0)*r);y.arc(p[0],p[1],r,a0,a0+.9);}y.stroke();y.lineWidth=1;}}
+  function btn(box,label,fn,pri){const b=document.createElement('button');b.type='button';b.textContent=label;if(pri)b.className='pri';b.onclick=e=>{e.stopPropagation();fn();};box.appendChild(b);}
+  function line(box,cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;box.appendChild(d);return d;}
+  function openNode(k){sel=k;const N=$('#ccNd');if(!N)return;if(!k){N.hidden=true;return;}
+    const sub=k.startsWith('sub:')?(crew.subs||[]).find(q=>'sub:'+q.id===k):null,nd=sub||((crew.nodes||{})[k]||{}),S=sub?(sub.s||'run'):st(k),name=sub?(sub.label||sub.id):(NAME[k]||k);
+    N.textContent='';const H=document.createElement('div');H.className='nh';const a=document.createElement('span');a.textContent=name.toUpperCase();const b=document.createElement('i');b.textContent=S==='you'?'WAITS ON YOU':S.toUpperCase();H.append(a,b);N.appendChild(H);
+    const note=sub?[sub.task,sub.model&&(sub.model+(sub.effort?' · '+sub.effort:'')),sub.started&&('since '+sub.started)].filter(Boolean).join(' · '):nd.n;
+    line(N,'nn',note||(k==='git'?'GitHub channel: asks, answers, proposals':'No note yet'));
+    const id=sub?'sub':k;(crew.chan||[]).filter(e=>e&&(e.from===id||e.to===id)).slice(-3).forEach(e=>line(N,'ne',(NAME[e.from]||e.from)+' → '+(NAME[e.to]||e.to)+' · '+(e.kind||'')));
+    const B=document.createElement('div');B.className='nb';N.appendChild(B);
+    if(!sub&&k!=='git'&&k!=='you')btn(B,'CONDUCT',()=>{if(k==='orch'||k==='fable'){model=k==='orch'?'orchestrator':'fable';}const ta=$('#ccIn'),pre=PRE[k]||'';if(ta&&pre&&!ta.value.startsWith(pre))ta.value=pre+ta.value;paint();if(ta)ta.focus();status('Conducting → '+name+'. Speak or type, then send.');},true);
+    btn(B,'SPEAK',()=>say(name+'. '+(S==='you'?'Waiting on you':S==='run'?'Running':'Idle')+'. '+(note||'')));
+    if(k!=='you')btn(B,'STATUS',async()=>{if(!db)return say('Sign in first.');try{await db.doc('reports/c'+Date.now().toString(36)).set({text:'Status of '+name+(sub?' (subagent '+sub.id+')':''),lane:'cmd',route:'map',model:'orchestrator',effort:'low',at:Date.now(),fix:''});say('Asked for the status of '+name+'.');}catch(e){say('Not sent.');}});
+    btn(B,'CLOSE',()=>openNode(null));N.hidden=false;}
+  nc.addEventListener('click',e=>{const R=nc.getBoundingClientRect(),px=e.clientX-R.left,py=e.clientY-R.top;let best=null,bd=30;
+    [...Object.keys(NP).map(k=>[k,NP[k][0]*R.width,NP[k][1]*R.height]),...subsPos(R.width,R.height).map(o=>[o.id,o.x,o.y])].forEach(([k,X,Y])=>{const d=Math.hypot(X-px,Y-py);if(d<bd){bd=d;best=k;}});
+    openNode(best&&best===sel?null:best);});
   function frame(){
     const w=c.clientWidth,h=c.clientHeight,d=devicePixelRatio||1;
     if(c.width!==Math.round(w*d)){c.width=Math.round(w*d);c.height=Math.round(h*d);mk(w,h);}
