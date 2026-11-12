@@ -22,7 +22,7 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .alrt .at{flex:1;overflow:auto;font:600 clamp(14px,3.8vw,17px)/1.35 'Orbitron','Chivo',system-ui,sans-serif;color:#FFE3E8}
 .cc .alrt .at .w{display:inline-block;white-space:pre;animation:ccD .38s cubic-bezier(.3,1.5,.5,1) both}
 @keyframes ccD{0%{opacity:0;transform:translateY(-22px)}100%{opacity:1;transform:none}}
-.cc .alrt form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.cc .alrt .av{display:flex;flex-wrap:wrap;gap:6px;font:700 10px/1 "Chivo Mono",monospace;letter-spacing:.18em;color:#FF8FA3}.alrt .av:empty{display:none}.alrt .av b{padding:6px 9px;border:1px solid #6B1A2A;background:#12040A;color:#FFE3E8;font-weight:700}.alrt .av b.hit{background:#FF4D6D;color:#1A0207;border-color:#FF8FA3}.alrt form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
 .cc .alrt input{font:500 13px/1.2 "Chivo",system-ui,sans-serif;color:#FFE3E8;background:#12040A;border:1px solid #6B1A2A;border-radius:0;padding:10px;min-width:0}
 .cc .alrt button{font:700 11px/1 "Chivo Mono",monospace;letter-spacing:.16em;padding:0 14px;border:0;border-radius:0;color:#1A0207;background:linear-gradient(180deg,#FF8FA3,#FF4D6D);cursor:pointer}
 @keyframes ccW{0%{opacity:0;transform:skewX(-12deg) translateY(7px)}60%{opacity:1;transform:skewX(-12deg) translateY(-3px)}100%{transform:skewX(-12deg)}}
@@ -83,7 +83,7 @@ function mount(){
   host.className='cc';host.setAttribute('aria-label','Command deck');
   host.innerHTML=`<div class="hull">
   <div class="bar"><span class="dot"></span><b>BRIDGE</b><span>COMMAND DECK</span><span class="seg"></span><span id="ccClock"></span></div>
-  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-hidden="true"></canvas><div class="alrt" id="ccAl" role="alertdialog" aria-labelledby="ccAlH" aria-describedby="ccAlT"><div class="ah" id="ccAlH">HIGH RISK · NEEDS YOU</div><div class="at" id="ccAlT"></div><form id="ccAlF"><input id="ccAlI" maxlength="600" placeholder="Your answer" aria-label="Your answer"><button type="submit">ANSWER</button></form></div><div class="rim"></div>
+  <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-hidden="true"></canvas><div class="alrt" id="ccAl" role="alertdialog" aria-labelledby="ccAlH" aria-describedby="ccAlT"><div class="ah" id="ccAlH">HIGH RISK · NEEDS YOU</div><div class="at" id="ccAlT"></div><div class="av" id="ccAlV" aria-live="polite"></div><form id="ccAlF"><input id="ccAlI" maxlength="600" placeholder="Your answer" aria-label="Your answer"><button type="submit">ANSWER</button></form></div><div class="rim"></div>
    <div class="hud"><span id="ccHudL">VOICE</span><span id="ccHudR">CREW</span></div>
    <div class="heard" id="ccHeard" aria-live="polite"><i>Say "brief" to start. Say "command off" to stop.</i></div>
    <div class="st" id="ccSt">Voice starting…</div>
@@ -106,17 +106,28 @@ function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y
   g.onkeydown=e=>{const k={ArrowUp:-20,ArrowDown:20}[e.key];if(k){e.preventDefault();ta.style.height=Math.max(44,ta.offsetHeight+k)+'px';}};
   ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#ccType').requestSubmit();}};}
 let VOX=[],VN='',SHOWN=0,armed=false;function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
-let alertId='',alertTimer=0;
+let alertId='',alertTimer=0,alertOpts=[],alertPend='';
+const okey=o=>String(o).trim().split(/\s+/)[0].toLowerCase();
+function alertChips(){const V=$('#ccAlV');if(!V)return;V.innerHTML='';if(!alertId)return;const L=document.createElement('span');L.textContent='SAY ';V.appendChild(L);(alertOpts.length?alertOpts:['answer …']).forEach(o=>{const b=document.createElement('b');b.textContent=alertOpts.length?okey(o).toUpperCase():'ANSWER …';if(alertPend&&o===alertPend)b.className='hit';V.appendChild(b);});if(alertPend){const c=document.createElement('span');c.textContent=' → YES TO SEND · NO TO CLEAR';V.appendChild(c);}}
 function showAlert(a){const box=$('#ccAl');if(!box)return;
-  if(!a||!a.id||a.answered||!a.text){box.className='alrt';alertId='';clearTimeout(alertTimer);return;}
-  if(a.id===alertId)return;alertId=a.id;const T=$('#ccAlT');T.textContent='';box.className='alrt show flash';
+  if(!a||!a.id||a.answered||!a.text){box.className='alrt';alertId='';alertOpts=[];alertPend='';alertChips();clearTimeout(alertTimer);return;}
+  if(a.id===alertId)return;alertId=a.id;alertPend='';alertOpts=Array.isArray(a.opts)?a.opts.filter(Boolean).map(String):[];alertChips();const T=$('#ccAlT');T.textContent='';box.className='alrt show flash';
   const ws=String(a.text).split(/\s+/).filter(Boolean);ws.forEach((w,i)=>{const s=document.createElement('span');s.className='w';s.style.animationDelay=(i*.12)+'s';s.textContent=w+' ';T.appendChild(s);});
   clearTimeout(alertTimer);alertTimer=setTimeout(()=>box.classList.remove('flash'),ws.length*120+60000);
-  if(armed)say('High risk. '+a.text);}
-async function answerAlert(e){e.preventDefault();const v=$('#ccAlI').value.trim();if(!v||!db||!alertId)return;
+  const ask=alertOpts.length?' Say '+alertOpts.map(okey).join(', or ')+'.':' Say answer, then your words.';
+  if(on||want)say('High risk. '+a.text+ask);else status('High risk waiting · tap the orb to answer by voice');}
+async function answerAlert(e){e.preventDefault();const v=$('#ccAlI').value.trim();if(v)sendAlert(v);}
+async function sendAlert(v){if(!v||!db||!alertId)return false;
   try{await db.doc('reports/a'+Date.now().toString(36)).set({text:'ALERT '+alertId+': '+v,lane:'intraday',at:Date.now(),fix:''});
-    await db.doc('live/alert').update({answered:true,answer:v,answered_at:Date.now()});$('#ccAlI').value='';showAlert(null);}
-  catch(err){status('Answer not sent: '+(err.message||err.code||'error'));}}
+    await db.doc('live/alert').update({answered:true,answer:v,answered_at:Date.now()});$('#ccAlI').value='';showAlert(null);return true;}
+  catch(err){status('Answer not sent: '+(err.message||err.code||'error'));return false;}}
+function heardAlert(w){
+  if(alertPend){
+    if(/^(yes|yes send|send|send it|confirm|go ahead)$/.test(w)){const v=alertPend;alertPend='';sendAlert(v).then(ok=>say(ok?'Sent: '+v+'.':'Not sent. Try again.'));return true;}
+    if(/^(no|cancel|clear|scratch that)$/.test(w)){alertPend='';alertChips();say('Cleared. Say your answer again.');return true;}}
+  let v='';for(const o of alertOpts){if(new RegExp('\\b'+okey(o).replace(/[^a-z0-9]/g,'')+'\\b').test(w)){v=o;break;}}
+  if(!v){const m=w.match(/^answer\s+(.+)/);if(m)v=m[1];}
+  if(!v)return false;alertPend=v;alertChips();say('Heard: '+v+'. Say yes to send, or no.');return true;}
 function paint(){
   document.querySelectorAll('#ccM .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===model));
   document.querySelectorAll('#ccE .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===effort));
@@ -143,6 +154,7 @@ function stop(){try{rec&&rec.stop();}catch(e){}on=false;status('Voice off · tap
 function heard(t){
   const w=t.toLowerCase().replace(/[.,!?]/g,'').trim();
   if(/\bcommands? off\b/.test(w)){armed=false;buf='';interim='';paint();return say('Command off. Say brief to start.');}
+  if(alertId&&heardAlert(w))return;
   if(!armed){if(/\bbrief\b/.test(w)){armed=true;paint();return brief();}return;}
   if(/^(brief|brief me|status|state)$/.test(w))return brief();
   if(/^(clear|cancel|scratch that)$/.test(w)){buf='';return;}
