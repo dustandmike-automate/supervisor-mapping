@@ -65,7 +65,7 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .taW{position:relative}.cc .taW textarea{display:block;width:100%;min-height:44px;resize:none;padding-right:28px!important}
 .cc .grip{position:absolute;right:2px;bottom:2px;width:24px;height:24px;cursor:ns-resize;touch-action:none;background:linear-gradient(135deg,transparent 45%,#3FD4FF 45%,#3FD4FF 52%,transparent 52%,transparent 62%,#3FD4FF 62%,#3FD4FF 69%,transparent 69%,transparent 79%,#3FD4FF 79%,#3FD4FF 86%,transparent 86%)}
 .cc .type textarea{font:500 13px/1.2 var(--display);color:var(--pearl);background:#070B12;border:1px solid #1E2A3C;border-radius:0;padding:10px}
-.cc .type textarea:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 1px rgba(63,212,255,.35)}
+.cc .type textarea.live{border-color:#A98BEF;box-shadow:0 0 0 1px rgba(169,139,239,.4)}.cc .type textarea:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 1px rgba(63,212,255,.35)}
 body{background:radial-gradient(90% 60% at 50% 0%,#0B1424 0%,#03050A 70%) fixed #03050A!important;color:#EEF3FF}
 #names,#namesTab,#bSpeak,#spkMsg,main>*:not(#cc):not(#pyrWrap){display:none!important}
 main{display:flex!important;flex-direction:column;gap:6px;max-width:560px;margin:0 auto}
@@ -85,12 +85,12 @@ function mount(){
   <div class="bar"><span class="dot"></span><b>BRIDGE</b><span>COMMAND DECK</span><span class="seg"></span><span id="ccClock"></span></div>
   <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-label="Agent network: tap a node to conduct it"></canvas><div class="nd" id="ccNd" hidden></div><div class="alrt" id="ccAl" role="alertdialog" aria-labelledby="ccAlH" aria-describedby="ccAlT"><div class="ah" id="ccAlH">HIGH RISK · NEEDS YOU</div><div class="at" id="ccAlT"></div><div class="av" id="ccAlV" aria-live="polite"></div><form id="ccAlF"><input id="ccAlI" maxlength="600" placeholder="Your answer" aria-label="Your answer"><button type="submit">ANSWER</button></form></div><div class="rim"></div>
    <div class="hud"><span id="ccHudL">VOICE</span><span id="ccHudR">CREW</span></div>
-   <div class="heard" id="ccHeard" aria-live="polite"><i>Say "brief" to start. Say "command off" to stop.</i></div>
+   
    <div class="st" id="ccSt">Voice starting…</div>
    <button class="orb off" id="ccOrb" type="button" aria-label="Voice on or off"><svg viewBox="0 0 70 66" aria-hidden="true"><defs><linearGradient id="tA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#BFF3FF"/><stop offset="1" stop-color="#3FD4FF"/></linearGradient><linearGradient id="tB" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3FD4FF"/><stop offset="1" stop-color="#2F6BFF"/></linearGradient><linearGradient id="tC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F6BFF"/><stop offset="1" stop-color="#0A1530"/></linearGradient></defs><g class="tet" stroke="#BFF3FF" stroke-width=".8" stroke-linejoin="round"><polygon points="35,2 4,58 35,44" fill="url(#tA)"/><polygon points="35,2 66,58 35,44" fill="url(#tB)"/><polygon points="4,58 66,58 35,44" fill="url(#tC)"/></g></svg></button></div></div>
   <div class="cons" id="ccCons" aria-label="Agent consoles">${AG.map(([k,l])=>`<div class="con" data-k="${k}" data-s="idle"><div class="in"><canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="nm">${l.toUpperCase()}</div><div class="nt"></div></div></div><span class="ln"></span></div>`).join('')}</div>
   <div class="keys"><div class="kl">DELEGATE TO</div><div class="row" id="ccM"></div><div class="kl">EFFORT</div><div class="row" id="ccE"></div>
-   <form class="type" id="ccType"><div class="taW"><textarea id="ccIn" maxlength="600" rows="2" placeholder="Speak, or type a command" aria-label="Type a command"></textarea><span class="grip" id="ccGrip" role="separator" aria-label="Drag to resize the command box" aria-orientation="horizontal" tabindex="0"></span></div><button class="k go" id="ccSend" type="submit">Send</button></form>
+   <form class="type" id="ccType"><div class="taW"><textarea id="ccIn" maxlength="600" rows="2" placeholder="Say “brief”, or type · voice words land here" aria-label="Type a command"></textarea><span class="grip" id="ccGrip" role="separator" aria-label="Drag to resize the command box" aria-orientation="horizontal" tabindex="0"></span></div><button class="k go" id="ccSend" type="submit">Send</button></form>
    <div class="row" style="margin-top:4px"><button class="k" id="ccBrief" type="button">Brief</button><button class="k" id="ccClr" type="button">Clear</button></div>
    <div class="help">Say “brief” to start command mode; it stays on until “command off”. In command mode: send · clear · a model and an effort to delegate.</div></div>
   <div class="floor"></div></div>`;
@@ -104,6 +104,7 @@ function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y
   const st=e=>{e.preventDefault();d=true;y0=Y(e);h0=ta.offsetHeight;},mv=e=>{if(!d)return;e.preventDefault();ta.style.height=Math.max(44,Math.min(innerHeight*.7,h0+Y(e)-y0))+'px';},en=()=>{d=false;};
   g.addEventListener('mousedown',st);g.addEventListener('touchstart',st,{passive:false});addEventListener('mousemove',mv);addEventListener('touchmove',mv,{passive:false});addEventListener('mouseup',en);addEventListener('touchend',en);
   g.onkeydown=e=>{const k={ArrowUp:-20,ArrowDown:20}[e.key];if(k){e.preventDefault();ta.style.height=Math.max(44,ta.offsetHeight+k)+'px';}};
+  ta.addEventListener('input',()=>{if(ta.dataset.v)buf=ta.value;});
   ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#ccType').requestSubmit();}};}
 let VOX=[],VN='',SHOWN=0,armed=false;function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
 let alertId='',alertTimer=0,alertOpts=[],alertPend='';
@@ -131,8 +132,8 @@ function heardAlert(w){
 function paint(){
   document.querySelectorAll('#ccM .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===model));
   document.querySelectorAll('#ccE .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===effort));
-  const h=$('#ccHeard');if(!h)return;
-  if(buf||interim){const ws=buf.split(/\s+/).filter(Boolean);h.textContent='';ws.forEach((w,k)=>{const sp=document.createElement('span');sp.className='w'+(k>=SHOWN?' nw':'');sp.textContent=w+' ';h.appendChild(sp);});SHOWN=ws.length;if(interim){const i=document.createElement('i');i.textContent=interim;h.appendChild(i);}}else SHOWN=0;
+  const ta=$('#ccIn');if(!ta)return;
+  if(buf||interim){ta.value=(buf+' '+interim).trim();ta.dataset.v='1';ta.classList.toggle('live',!!interim);}else if(ta.dataset.v){ta.value='';ta.dataset.v='';ta.classList.remove('live');}
   $('#ccOrb').className='orb '+(on?'on':'off');$('#ccHudL').textContent=(!on?'VOICE · OFF':armed?'VOICE · COMMAND':'VOICE · STANDBY')+(VN?' · '+VN:'');$('#ccOrb').classList.toggle('arm',armed);
   const N=crew.nodes||{};let run=0;
   document.querySelectorAll('#ccCons .con').forEach(c=>{const d=N[c.dataset.k]||{};c.dataset.s=d.s||'idle';c.querySelector('.nt').textContent=d.n||'standing by';if(d.s==='run')run++;});
@@ -163,7 +164,7 @@ function heard(t){
   const f=w.match(/\b(low|medium|high|max)\s*(effort)?\b/);if(f)effort=f[1];
   const end=/\b(send it|send|go ahead)$/.test(w);
   buf=(buf+' '+t.replace(/\b(send it|send|go ahead)[.!]?$/i,'')).trim();
-  if(end)send();
+  paint();if(end)send();
 }
 function lane(t){return /\btrigger|1sd intake\b/i.test(t)?'trigger':/\b(map|app|deck)\b/i.test(t)?'map':'intraday';}
 async function send(){
