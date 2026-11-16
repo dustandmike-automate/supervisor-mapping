@@ -1,4 +1,4 @@
-// Command deck layer (bridge): always-on voice, spoken brief, spoken commands with model/effort, agent consoles.
+// Command deck layer (bridge, display-only): voice input lives in O.H. (one mic); spoken alerts + brief, spoken commands with model/effort, agent consoles.
 // Layered on top of the map: mounts into #cc, reads live/current + live/crew + reports, writes reports (lane "cmd").
 (function(){
 const CH='polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px)';
@@ -22,7 +22,9 @@ const CSS=`.cc{--void:#04060A;--hull:#0B1018;--hull2:#121A26;--edge:#3FD4FF;--sa
 .cc .alrt .at{flex:1;overflow:auto;font:600 clamp(14px,3.8vw,17px)/1.35 'Orbitron','Chivo',system-ui,sans-serif;color:#FFE3E8}
 .cc .alrt .at .w{display:inline-block;white-space:pre;animation:ccD .38s cubic-bezier(.3,1.5,.5,1) both}
 @keyframes ccD{0%{opacity:0;transform:translateY(-22px)}100%{opacity:1;transform:none}}
-.cc .alrt .av{display:flex;flex-wrap:wrap;gap:6px;font:700 10px/1 "Chivo Mono",monospace;letter-spacing:.18em;color:#FF8FA3}.alrt .av:empty{display:none}.alrt .av b{padding:6px 9px;border:1px solid #6B1A2A;background:#12040A;color:#FFE3E8;font-weight:700}.alrt .av b.hit{background:#FF4D6D;color:#1A0207;border-color:#FF8FA3}.alrt form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.cc .alrt .av{display:flex;flex-wrap:wrap;gap:6px;font:700 10px/1 "Chivo Mono",monospace;letter-spacing:.18em;color:#FF8FA3}.alrt .av:empty{display:none}.alrt .av b{padding:6px 9px;border:1px solid #6B1A2A;background:#12040A;color:#FFE3E8;font-weight:700}.alrt .av b.hit{background:#FF4D6D;color:#1A0207;border-color:#FF8FA3}
+.alrt .av button{padding:8px 11px;border:1px solid #6B1A2A;background:#12040A;color:#FFE3E8;font:700 10px/1 "Chivo Mono",monospace;letter-spacing:.18em;cursor:pointer}.alrt .av button.hit{background:#FF4D6D;color:#1A0207;border-color:#FF8FA3}
+.cc .ohv{position:absolute;left:50%;bottom:22px;z-index:3;transform:translateX(-50%);font:700 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:#BFF3FF;padding:8px 12px;border:1px solid rgba(63,212,255,.38);background:rgba(2,3,8,.72);white-space:nowrap;box-shadow:0 0 14px rgba(63,212,255,.25)}.alrt form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
 .cc .alrt input{font:500 13px/1.2 "Chivo",system-ui,sans-serif;color:#FFE3E8;background:#12040A;border:1px solid #6B1A2A;border-radius:0;padding:10px;min-width:0}
 .cc .alrt button{font:700 11px/1 "Chivo Mono",monospace;letter-spacing:.16em;padding:0 14px;border:0;border-radius:0;color:#1A0207;background:linear-gradient(180deg,#FF8FA3,#FF4D6D);cursor:pointer}
 @keyframes ccW{0%{opacity:0;transform:skewX(-12deg) translateY(7px)}60%{opacity:1;transform:skewX(-12deg) translateY(-3px)}100%{transform:skewX(-12deg)}}
@@ -86,18 +88,17 @@ function mount(){
   <div class="vp"><div class="glass"><div class="img" aria-hidden="true"></div><canvas id="ccFx" aria-hidden="true" style="mix-blend-mode:screen;opacity:.55"></canvas><div class="scan" aria-hidden="true"></div><div class="shade"></div><canvas id="ccNet" aria-label="Agent network: tap a node to conduct it"></canvas><div class="nd" id="ccNd" hidden></div><div class="alrt" id="ccAl" role="alertdialog" aria-labelledby="ccAlH" aria-describedby="ccAlT"><div class="ah" id="ccAlH">HIGH RISK · NEEDS YOU</div><div class="at" id="ccAlT"></div><div class="av" id="ccAlV" aria-live="polite"></div><form id="ccAlF"><input id="ccAlI" maxlength="600" placeholder="Your answer" aria-label="Your answer"><button type="submit">ANSWER</button></form></div><div class="rim"></div>
    <div class="hud"><span id="ccHudL">VOICE</span><span id="ccHudR">CREW</span></div>
    
-   <div class="st" id="ccSt">Voice starting…</div>
-   <button class="orb off" id="ccOrb" type="button" aria-label="Voice on or off"><svg viewBox="0 0 70 66" aria-hidden="true"><defs><linearGradient id="tA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#BFF3FF"/><stop offset="1" stop-color="#3FD4FF"/></linearGradient><linearGradient id="tB" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3FD4FF"/><stop offset="1" stop-color="#2F6BFF"/></linearGradient><linearGradient id="tC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F6BFF"/><stop offset="1" stop-color="#0A1530"/></linearGradient></defs><g class="tet" stroke="#BFF3FF" stroke-width=".8" stroke-linejoin="round"><polygon points="35,2 4,58 35,44" fill="url(#tA)"/><polygon points="35,2 66,58 35,44" fill="url(#tB)"/><polygon points="4,58 66,58 35,44" fill="url(#tC)"/></g></svg></button></div></div>
+   <div class="st" id="ccSt">Display bridge · voice in O.H.</div>
+   <div class="ohv" id="ccOH" role="note">Voice: O.H.</div></div></div>
   <div class="cons" id="ccCons" aria-label="Agent consoles">${AG.map(([k,l])=>`<div class="con" data-k="${k}" data-s="idle"><div class="in"><canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="nm">${l.toUpperCase()}</div><div class="nt"></div></div></div><span class="ln"></span></div>`).join('')}</div>
   <div class="keys"><div class="kl">DELEGATE TO</div><div class="row" id="ccM"></div><div class="kl">EFFORT</div><div class="row" id="ccE"></div>
-   <form class="type" id="ccType"><div class="taW"><textarea id="ccIn" maxlength="600" rows="2" placeholder="Say “brief”, or type · voice words land here" aria-label="Type a command"></textarea><span class="grip" id="ccGrip" role="separator" aria-label="Drag to resize the command box" aria-orientation="horizontal" tabindex="0"></span></div><button class="k go" id="ccSend" type="submit">Send</button></form>
+   <form class="type" id="ccType"><div class="taW"><textarea id="ccIn" maxlength="600" rows="2" placeholder="Type a command (fallback) · voice is in O.H." aria-label="Type a command"></textarea><span class="grip" id="ccGrip" role="separator" aria-label="Drag to resize the command box" aria-orientation="horizontal" tabindex="0"></span></div><button class="k go" id="ccSend" type="submit">Send</button></form>
    <div class="row" style="margin-top:4px"><button class="k" id="ccBrief" type="button">Brief</button><button class="k" id="ccClr" type="button">Clear</button></div>
-   <div class="help">Say “brief” to start command mode; it stays on until “command off”. In command mode: send · clear · a model and an effort to delegate.</div></div>
+   <div class="help">Voice is O.H.’s: speak there. This deck shows the crew live and speaks alerts. Typing here is a fallback: pick a model and an effort, then Send.</div></div>
   <div class="floor"></div></div>`;
   const keys=(id,list,set)=>{const el=$(id);el.innerHTML=list.map(v=>`<button type="button" class="k" data-v="${v}">${v==='orchestrator'?'orch':v}</button>`).join('');el.onclick=e=>{const v=e.target.dataset&&e.target.dataset.v;if(v){set(v);paint();}};};
   keys('#ccM',MODELS,v=>model=v);keys('#ccE',EFF,v=>effort=v);
-  $('#ccOrb').onclick=()=>{if(on){want=false;armed=false;stop();}else{want=true;armed=true;start();brief();}};
-  $('#ccType').onsubmit=e=>{e.preventDefault();const v=$('#ccIn').value.trim();if(v){buf=v;$('#ccIn').value='';}send();};const py=document.getElementById('bPyr');if(py)py.addEventListener('click',e=>{e.stopImmediatePropagation();brief();},true);$('#ccBrief').onclick=brief;$('#ccClr').onclick=()=>{buf='';interim='';paint();};
+    $('#ccType').onsubmit=e=>{e.preventDefault();const v=$('#ccIn').value.trim();if(v){buf=v;$('#ccIn').value='';}send();};const py=document.getElementById('bPyr');if(py)py.addEventListener('click',e=>{e.stopImmediatePropagation();brief();},true);$('#ccBrief').onclick=brief;$('#ccClr').onclick=()=>{buf='';interim='';paint();};
   grip();$('#ccAlF').onsubmit=answerAlert;fx();return true;
 }
 function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y=e=>e.touches?e.touches[0].clientY:e.clientY;
@@ -109,14 +110,14 @@ function grip(){const g=$('#ccGrip'),ta=$('#ccIn');let d=false,y0=0,h0=0;const Y
 let VOX=[],VN='',SHOWN=0,armed=false;function loadV(){if(window.speechSynthesis){const l=speechSynthesis.getVoices();if(l.length)VOX=l;}}loadV();if(window.speechSynthesis)speechSynthesis.addEventListener('voiceschanged',loadV);
 let alertId='',alertTimer=0,alertOpts=[],alertPend='';
 const okey=o=>String(o).trim().split(/\s+/)[0].toLowerCase();
-function alertChips(){const V=$('#ccAlV');if(!V)return;V.innerHTML='';if(!alertId)return;const L=document.createElement('span');L.textContent='SAY ';V.appendChild(L);(alertOpts.length?alertOpts:['answer …']).forEach(o=>{const b=document.createElement('b');b.textContent=alertOpts.length?okey(o).toUpperCase():'ANSWER …';if(alertPend&&o===alertPend)b.className='hit';V.appendChild(b);});if(alertPend){const c=document.createElement('span');c.textContent=' → YES TO SEND · NO TO CLEAR';V.appendChild(c);}}
+function alertChips(){const V=$('#ccAlV');if(!V)return;V.innerHTML='';if(!alertId)return;const L=document.createElement('span');L.textContent=alertOpts.length?'TAP ':'TYPE YOUR ANSWER BELOW';V.appendChild(L);alertOpts.forEach(o=>{const b=document.createElement('button');b.type='button';b.textContent=okey(o).toUpperCase();if(alertPend&&o===alertPend)b.className='hit';b.onclick=()=>{alertPend=o;const I=$('#ccAlI');if(I)I.value=o;alertChips();};V.appendChild(b);});if(alertPend){const c=document.createElement('span');c.textContent=' → TAP ANSWER TO SEND';V.appendChild(c);}}
 function showAlert(a){const box=$('#ccAl');if(!box)return;
   if(!a||!a.id||a.answered||!a.text){box.className='alrt';alertId='';alertOpts=[];alertPend='';alertChips();clearTimeout(alertTimer);return;}
   if(a.id===alertId)return;alertId=a.id;alertPend='';alertOpts=Array.isArray(a.opts)?a.opts.filter(Boolean).map(String):[];alertChips();const T=$('#ccAlT');T.textContent='';box.className='alrt show flash';
   const ws=String(a.text).split(/\s+/).filter(Boolean);ws.forEach((w,i)=>{const s=document.createElement('span');s.className='w';s.style.animationDelay=(i*.12)+'s';s.textContent=w+' ';T.appendChild(s);});
   clearTimeout(alertTimer);alertTimer=setTimeout(()=>box.classList.remove('flash'),ws.length*120+60000);
-  const ask=alertOpts.length?' Say '+alertOpts.map(okey).join(', or ')+'.':' Say answer, then your words.';
-  if(on||want)say('High risk. '+a.text+ask);else status('High risk waiting · tap the orb to answer by voice');}
+  const ask=alertOpts.length?' Tap '+alertOpts.map(okey).join(', or ')+', then answer.':' Type your answer, then tap answer.';
+  say('High risk. '+a.text+ask);}
 async function answerAlert(e){e.preventDefault();const v=$('#ccAlI').value.trim();if(v)sendAlert(v);}
 async function sendAlert(v){if(!v||!db||!alertId)return false;
   try{await db.doc('reports/a'+Date.now().toString(36)).set({text:'ALERT '+alertId+': '+v,lane:'intraday',at:Date.now(),fix:''});
@@ -134,13 +135,15 @@ function paint(){
   document.querySelectorAll('#ccE .k').forEach(b=>b.classList.toggle('sel',b.dataset.v===effort));
   const ta=$('#ccIn');if(!ta)return;
   if(buf||interim){ta.value=(buf+' '+interim).trim();ta.dataset.v='1';ta.classList.toggle('live',!!interim);}else if(ta.dataset.v){ta.value='';ta.dataset.v='';ta.classList.remove('live');}
-  $('#ccOrb').className='orb '+(on?'on':'off');$('#ccHudL').textContent=(!on?'VOICE · OFF':armed?'VOICE · COMMAND':'VOICE · STANDBY')+(VN?' · '+VN:'');$('#ccOrb').classList.toggle('arm',armed);
+  $('#ccHudL').textContent='VOICE · O.H.'+(VN?' · SPEAKS '+VN:'');
   const N=crew.nodes||{};let run=0;
   document.querySelectorAll('#ccCons .con').forEach(c=>{const d=N[c.dataset.k]||{};c.dataset.s=d.s||'idle';c.querySelector('.nt').textContent=d.n||'standing by';if(d.s==='run')run++;});
   $('#ccHudR').textContent=run+' RUNNING';
 }
 function status(t){const s=$('#ccSt');if(s)s.textContent=t;}
+const MIC_IN=false; // one mic: O.H. owns voice input; the deck never opens the microphone
 function start(){
+  if(!MIC_IN)return;
   const R=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!R){status('Voice not supported in this browser. Type in Ask or change.');return;}
   if(on||speaking)return;
@@ -282,9 +285,5 @@ document.addEventListener('DOMContentLoaded',async()=>{
   db.doc('live/crew').onSnapshot(s=>{crew=s.data()||{};paint();});
   db.doc('live/alert').onSnapshot(s=>showAlert(s.data()));
   db.collection('reports').onSnapshot(s=>{reports=s.docs.map(d=>d.data());});
-  start();
-  const once=()=>{document.removeEventListener('pointerdown',once);if(!on){want=true;start();}};
-  document.addEventListener('pointerdown',once);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!on)start();});
 });
 })();
