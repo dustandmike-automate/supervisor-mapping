@@ -5,6 +5,10 @@
 const LEDGER='https://claude.ai/artifact/Q5w5EBbk9KQS5qS65naJCz';
 const CSS=`.cc .vp{height:clamp(420px,118vw,560px)!important}
 .cc .vp .img,.cc .vp .scan,#ccFx,#ccNet,.cc .heard,#pyrWrap,#ccCons,#ccNd{display:none!important}
+#ccM .k,#ccE .k,#ccBrief,#ccClr{clip-path:polygon(12% 0,88% 0,100% 50%,88% 100%,12% 100%,0 50%);background:linear-gradient(180deg,#1C2A3E,#0A0F18);padding:12px 10px;box-shadow:none}
+#ccM .k::after,#ccE .k::after,#ccBrief::after,#ccClr::after{left:30%;right:30%}
+#ccM .k.sel,#ccE .k.sel{color:#fff;background:linear-gradient(90deg,rgba(63,224,255,.45),rgba(226,85,255,.45))}
+#ccM .k:hover,#ccE .k:hover,#ccBrief:hover,#ccClr:hover{background:linear-gradient(180deg,#26384F,#0F1622)}
 .cc .alrt{inset:auto 6% auto 6%!important;top:10px!important;max-height:55%!important}
 .cc .vp .glass{background:#020308!important}
 #rtFun{position:absolute;inset:0;width:100%;height:100%;cursor:pointer;touch-action:manipulation}
@@ -26,6 +30,7 @@ const CSS=`.cc .vp{height:clamp(420px,118vw,560px)!important}
 .rtRow .he{font:500 15px 'Times New Roman',serif;color:#fff}.rtRow em{font-style:italic;color:#EDE2FF}
 .rtApex{margin:2px 0 0;font:500 12px/1.45 Inter,system-ui,sans-serif;color:#EEF4FF;text-align:center}
 .rtApex small{display:block;color:#8A97A8;font:400 10px/1.4 'Chivo Mono',monospace;margin-top:4px}`;
+const SHOW_IDS=false; // owner 11-16 (deck cmd): identities off the dash; keys become hexagons
 const COL=['#3FE0FF','#6FB8FF','#A98BFF','#D06BFF','#E255FF'];
 function mount(){
  const glass=document.querySelector('#cc .vp .glass'),vp=document.querySelector('#cc .vp');
@@ -52,7 +57,7 @@ function mount(){
 
  // Agent identities: move on their own (running ones work down toward the point of action, the one waiting on you rises to the rim,
  // idle ones drift at the edge); drag one to give it a new home (kept per device). Tap opens a small anchored note; tap again closes.
- const AGS=[...document.querySelectorAll('#ccCons .con')].map(c=>({k:c.dataset.k,c,name:c.querySelector('.nm').textContent}));
+ const AGS=SHOW_IDS?[...document.querySelectorAll('#ccCons .con')]:[].map(c=>({k:c.dataset.k,c,name:c.querySelector('.nm').textContent}));
  let HOME={};try{HOME=JSON.parse(localStorage.getItem('rtHome')||'{}');}catch(_){}
  const idBox=document.createElement('div');idBox.className='rtCard';idBox.hidden=true;glass.appendChild(idBox);let idSel=null;
  function closeId(){idSel=null;idBox.hidden=true;}
