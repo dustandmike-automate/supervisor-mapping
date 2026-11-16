@@ -186,7 +186,7 @@ function brief(){
 function say(t){
   status(t);if(!window.speechSynthesis)return;
   speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.94;u.pitch=.88;
-  loadV();const V=VOX.filter(v=>/^en/i.test(v.lang)),pick=[/Premium/i,/Enhanced/i,/Siri/i,/Natural|Neural|Online/i,/Evan|Nathan|Aaron|Daniel|Arthur/i,/Google UK English Male|Google US English/i];
+  loadV();const V=VOX.filter(v=>/^en/i.test(v.lang)),pick=[/^Lee\b/i,/Premium/i,/Enhanced/i,/Siri/i,/Natural|Neural|Online/i,/Evan|Nathan|Aaron|Daniel|Arthur/i,/Google UK English Male|Google US English/i];
   let v=null;for(const r of pick){v=V.find(x=>r.test(x.name));if(v)break;}if(v){u.voice=v;VN=v.name.replace(/\s*\(.*\)/,'').toUpperCase();paint();}
   speaking=true;try{rec&&rec.stop();}catch(e){}
   u.onend=u.onerror=()=>{speaking=false;status(on?'Listening':'Ready');if(want)setTimeout(start,250);};
