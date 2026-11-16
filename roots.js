@@ -4,13 +4,18 @@
 (function(){
 const LEDGER='https://claude.ai/artifact/Q5w5EBbk9KQS5qS65naJCz';
 const CSS=`.cc .vp{height:clamp(420px,118vw,560px)!important}
-.cc .vp .img,.cc .vp .scan,#ccFx,#ccNet,.cc .heard{display:none!important}
+.cc .vp .img,.cc .vp .scan,#ccFx,#ccNet,.cc .heard,#pyrWrap,#ccCons,#ccNd{display:none!important}
+.cc .alrt{inset:auto 6% auto 6%!important;top:10px!important;max-height:55%!important}
 .cc .vp .glass{background:#020308!important}
 #rtFun{position:absolute;inset:0;width:100%;height:100%;cursor:pointer;touch-action:manipulation}
 .cc .vp .shade{background:linear-gradient(180deg,rgba(2,3,8,0) 70%,rgba(2,3,8,.85) 100%)!important;pointer-events:none}
-.rtCard{position:absolute;left:7%;right:7%;top:12%;z-index:4;padding:12px 14px;background:rgba(3,6,14,.92);border:1px solid rgba(63,224,255,.6);box-shadow:0 0 30px rgba(226,85,255,.3);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%,0 10px);display:grid;gap:6px;font:400 12px/1.4 Inter,system-ui,sans-serif;color:#DCE6F7}
+.rtCard{position:absolute;z-index:4;width:min(270px,74%);max-height:62%;overflow:auto;padding:10px 12px;cursor:pointer;background:rgba(3,6,14,.92);border:1px solid rgba(63,224,255,.6);box-shadow:0 0 30px rgba(226,85,255,.3);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%,0 10px);display:grid;gap:6px;font:400 12px/1.4 Inter,system-ui,sans-serif;color:#DCE6F7}
 .rtCard[hidden]{display:none}.rtCard h4{margin:0;display:flex;justify-content:space-between;font:700 15px/1.1 'Orbitron',system-ui,sans-serif;letter-spacing:.12em;color:#EEF4FF}
-.rtCard h4 button{background:none;border:0;color:#93A3B8;font:700 14px/1 monospace;cursor:pointer;padding:0 2px}
+.rtCard h4 i{font:400 9px/1 'Chivo Mono',monospace;letter-spacing:.12em;color:#8A97A8;font-style:normal}
+.rtId{position:absolute;z-index:3;display:flex;align-items:center;gap:5px;padding:4px 8px 4px 4px;border:1px solid rgba(147,163,184,.35);background:rgba(3,6,14,.72);color:#DCE6F7;font:700 9px/1 'Chivo Mono',monospace;letter-spacing:.1em;cursor:grab;touch-action:none;user-select:none;transform:translate(-50%,-50%);white-space:nowrap}
+.rtId:active{cursor:grabbing}.rtId i{width:10px;height:10px;border-radius:50%;background:#55606f;box-shadow:0 0 0 2px rgba(255,255,255,.08)}
+.rtId[data-s=run] i{background:#3FE0FF;box-shadow:0 0 10px #3FE0FF}.rtId[data-s=you] i{background:#F2C66B;box-shadow:0 0 10px #F2C66B}.rtId[data-s=you]{color:#F2C66B}
+.rtId:focus-visible{outline:1px solid #3FE0FF}
 .rtCard .he{font:500 20px/1.1 'Times New Roman',serif;color:#fff}
 .rtCard em{font-style:italic;color:#F3E9FF}.rtCard small{display:block;color:#8A97A8;font:400 10.5px/1.3 'Chivo Mono',monospace}
 .rtCard a,.rtList a{color:#3FE0FF}
@@ -35,20 +40,46 @@ function mount(){
   +`<p class="rtApex">${window.ROOTS_APEX}<small>Lines drawn from each root (MODEL wording) · <a href="${LEDGER}" target="_blank" rel="noopener">Laws and automation roots</a> · O.H. opens each root on this Mac</small></p>`;
  vp.after(list);
  let sel=-1;
- function open(i){sel=i;if(i<0){card.hidden=true;return;}const r=R[i];
-  card.innerHTML=`<h4><span style="color:${COL[i]}">${r.name.toUpperCase()}</span><button type="button" aria-label="Close">×</button></h4>
+ function place(el,px,py){const gw=glass.clientWidth,gh=glass.clientHeight,w=el.offsetWidth,h=el.offsetHeight;el.style.left=Math.max(6,Math.min(gw-w-6,px-w/2))+'px';el.style.top=Math.max(6,Math.min(gh-h-6,py+14))+'px';}
+ function open(i,px,py){if(i===sel||i<0){sel=-1;card.hidden=true;return;}sel=i;closeId();const r=R[i];
+  card.innerHTML=`<h4><span style="color:${COL[i]}">${r.name.toUpperCase()}</span><i>TAP TO CLOSE</i></h4>
   <div><i>${r.latin}</i>: ${r.latinSays}</div><div><span class="he" lang="he" dir="rtl">${r.hebrew}</span> ${r.hebrewSays}</div>
   <div><b>${r.means}</b></div><div><em>${r.quote}</em><small>${r.who}</small></div>
   <div><a href="${OH}${r.oh}" target="_blank" rel="noopener">Open ${r.name} in O.H.</a> · <a href="${LEDGER}#t-${r.id}" target="_blank" rel="noopener">See every ${r.name.toLowerCase()} node</a></div>`;
-  card.hidden=false;card.querySelector('button').onclick=e=>{e.stopPropagation();open(-1);};}
- list.onclick=e=>{const b=e.target.closest('.rtRow');if(b){open(+b.dataset.i);vp.scrollIntoView({behavior:'smooth',block:'center'});}};
+  card.hidden=false;place(card,px??glass.clientWidth/2,py??glass.clientHeight*.3);}
+ card.onclick=e=>{if(e.target.closest('a'))return;open(-1);};
+ list.onclick=e=>{const b=e.target.closest('.rtRow');if(b){const k=+b.dataset.i;open(k,glass.clientWidth/2,(Y(T[k])+Y(T[k+1]))/2);vp.scrollIntoView({behavior:'smooth',block:'center'});}};
+
+ // Agent identities: move on their own (running ones work down toward the point of action, the one waiting on you rises to the rim,
+ // idle ones drift at the edge); drag one to give it a new home (kept per device). Tap opens a small anchored note; tap again closes.
+ const AGS=[...document.querySelectorAll('#ccCons .con')].map(c=>({k:c.dataset.k,c,name:c.querySelector('.nm').textContent}));
+ let HOME={};try{HOME=JSON.parse(localStorage.getItem('rtHome')||'{}');}catch(_){}
+ const idBox=document.createElement('div');idBox.className='rtCard';idBox.hidden=true;glass.appendChild(idBox);let idSel=null;
+ function closeId(){idSel=null;idBox.hidden=true;}
+ idBox.onclick=closeId;
+ const ag=AGS.map((a,n)=>{const b=document.createElement('button');b.type='button';b.className='rtId';b.innerHTML='<i></i><span></span>';b.querySelector('span').textContent=a.name;b.setAttribute('aria-label',a.name+': drag to move, tap for status');glass.appendChild(b);
+  const ang=n*Math.PI*2/6+.3;return {...a,b,ang,x:.5+.42*Math.cos(ang),y:.16+.06*Math.sin(ang),drag:false};});
+ function goal(o,s){const h=HOME[o.k];if(h)return [h[0]+.03*Math.sin(s*.4+o.ang),h[1]+.02*Math.cos(s*.5+o.ang)];
+  const st=o.c.dataset.s,w=W||1,hh=H||1;
+  if(st==='run'){const t=.55+.3*((Math.sin(s*.3+o.ang)+1)/2),r=rad(t),a=s*.6+o.ang;return [(cx+r*Math.cos(a))/w,(Y(t)+r*.17*Math.sin(a))/hh];}
+  if(st==='you')return [.5+.18*Math.cos(o.ang),(y0-24)/hh];
+  const a=o.ang+s*.04;return [.5+.4*Math.cos(a),(y0/hh)+.1*Math.sin(a)];}
+ function moveIds(s){ag.forEach(o=>{if(o.drag)return;const [gx,gy]=goal(o,s);o.x+=(gx-o.x)*.03;o.y+=(gy-o.y)*.03;o.x=Math.max(.06,Math.min(.94,o.x));o.y=Math.max(.09,Math.min(.95,o.y));o.b.style.left=(o.x*100)+'%';o.b.style.top=(o.y*100)+'%';o.b.dataset.s=o.c.dataset.s;});}
+ ag.forEach(o=>{let sx=0,sy=0,moved=false;
+  o.b.addEventListener('pointerdown',e=>{o.drag=true;moved=false;sx=e.clientX;sy=e.clientY;o.b.setPointerCapture(e.pointerId);});
+  o.b.addEventListener('pointermove',e=>{if(!o.drag)return;if(Math.hypot(e.clientX-sx,e.clientY-sy)>6)moved=true;if(!moved)return;const g=glass.getBoundingClientRect();o.x=Math.max(.06,Math.min(.94,(e.clientX-g.left)/g.width));o.y=Math.max(.04,Math.min(.95,(e.clientY-g.top)/g.height));o.b.style.left=(o.x*100)+'%';o.b.style.top=(o.y*100)+'%';});
+  o.b.addEventListener('pointerup',e=>{o.drag=false;if(moved){HOME[o.k]=[o.x,o.y];try{localStorage.setItem('rtHome',JSON.stringify(HOME));}catch(_){}return;}
+   if(idSel===o.k)return closeId();idSel=o.k;sel=-1;card.hidden=true;const st=o.c.dataset.s;
+   idBox.innerHTML='<h4><span></span><i>TAP TO CLOSE</i></h4><div class="nt"></div><small>Drag to give it a new home. Double-tap to let it roam again.</small>';idBox.querySelector('span').textContent=o.name+' · '+(st==='you'?'WAITS ON YOU':st.toUpperCase());idBox.querySelector('.nt').textContent=o.c.querySelector('.nt').textContent||'standing by';
+   idBox.hidden=false;place(idBox,o.x*glass.clientWidth,o.y*glass.clientHeight);});
+  o.b.addEventListener('dblclick',()=>{delete HOME[o.k];try{localStorage.setItem('rtHome',JSON.stringify(HOME));}catch(_){}closeId();});});
  // geometry
  const x=cv.getContext('2d');let W=0,H=0,cx=0,y0=0,ya=0,R0=0;
  const T=[0,.2,.4,.6,.8,1];
  const rad=t=>R0*Math.pow(1-t,1.55)+R0*.012;
  const Y=t=>y0+(ya-y0)*Math.pow(t,.85);
  function size(){const d=devicePixelRatio||1,b=cv.getBoundingClientRect();W=b.width;H=b.height;cv.width=Math.round(W*d);cv.height=Math.round(H*d);x.setTransform(d,0,0,d,0,0);cx=W/2;y0=H*.2;ya=H*.73;R0=Math.min(W*.44,H*.6);}
- cv.addEventListener('click',e=>{const b=cv.getBoundingClientRect(),py=e.clientY-b.top;if(py<y0-20||py>ya+10)return open(-1);for(let i=0;i<5;i++){if(py<=Y(T[i+1])+4)return open(i);}});
+ cv.addEventListener('click',e=>{const b=cv.getBoundingClientRect(),px=e.clientX-b.left,py=e.clientY-b.top;closeId();if(py<y0-20||py>ya+10){sel=-1;card.hidden=true;return;}for(let i=0;i<5;i++){if(py<=Y(T[i+1])+4)return open(i,px,py);}});
  // particles
  const cols=[],shards=[],sparks=[];let t0=performance.now();
  function seed(){cols.length=0;const n=Math.max(18,Math.round(W/14));for(let i=0;i<n;i++)cols.push({x:(i+.5)*W/n,y:Math.random()*H*.3,v:.4+Math.random()*.9,s:Array.from({length:8},()=>Math.random()<.5?'0':'1')});}
@@ -85,8 +116,8 @@ function mount(){
   x.font='700 10px Orbitron,system-ui,sans-serif';x.fillStyle='#FFFFFF';x.fillText('ONE POINT OF ACTION',cx,ya+30);
  }
  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
- function loop(n){frame(n);if(!still)requestAnimationFrame(loop);}
- size();seed();new ResizeObserver(()=>{size();seed();if(still)frame(performance.now());}).observe(cv);requestAnimationFrame(loop);
+ function loop(n){frame(n);moveIds((n-t0)/1000);if(!still)requestAnimationFrame(loop);}
+ size();seed();new ResizeObserver(()=>{size();seed();if(still){frame(performance.now());moveIds(0);}}).observe(cv);requestAnimationFrame(loop);
  return true;
 }
 let tries=0;(function wait(){if(mount())return;if(++tries<100)setTimeout(wait,150);})();
