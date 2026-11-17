@@ -2,7 +2,7 @@
 // Inflow (binary rain: voice, market, asks) -> Law -> Memory -> Skills -> Tools -> Automations -> apex (one point of action, sparks out over the earth grid).
 // Display only. Keeps the deck's alert overlay, status line and crew consoles. Data: roots-data.js.
 (function(){
-const LEDGER='https://claude.ai/artifact/Q5w5EBbk9KQS5qS65naJCz';
+const LEDGER='https://claude.ai/artifact/Q5w5EBbk9KQS5qS65naJCz';const AUTH='https://claude.ai/artifact/9c48CG6MjDyZLFPYvs7amJ';
 const CSS=`.cc .vp{height:clamp(420px,118vw,560px)!important}
 .cc .vp .img,.cc .vp .scan,#ccFx,#ccNet,.cc .heard,#pyrWrap,#ccCons,#ccNd{display:none!important}
 #ccM .k,#ccE .k,#ccBrief,#ccClr{clip-path:polygon(12% 0,88% 0,100% 50%,88% 100%,12% 100%,0 50%);background:linear-gradient(180deg,#1C2A3E,#0A0F18);padding:12px 10px;box-shadow:none}
@@ -42,7 +42,7 @@ function mount(){
  const card=document.createElement('div');card.className='rtCard';card.hidden=true;card.setAttribute('aria-live','polite');glass.appendChild(card);
  const list=document.createElement('div');list.className='rtList';list.setAttribute('aria-label','The five roots');
  list.innerHTML=R.map((r,i)=>`<button type="button" class="rtRow" data-i="${i}" style="--c:${COL[i]}"><b>${r.name.toUpperCase()}</b><span><i>${r.latin}</i> · <span class="he" lang="he" dir="rtl">${r.hebrew}</span> · ${r.means}</span><span><em>${r.quote}</em></span></button>`).join('')
-  +`<p class="rtApex">${window.ROOTS_APEX}<small>Lines drawn from each root (MODEL wording) · <a href="${LEDGER}" target="_blank" rel="noopener">Laws and automation roots</a> · O.H. opens each root on this Mac</small></p>`;
+  +`<p class="rtApex">${window.ROOTS_APEX}<small>Lines drawn from each root (MODEL wording) · <a href="${LEDGER}" target="_blank" rel="noopener">Laws and automation roots</a> · <a href="${AUTH}" target="_blank" rel="noopener">Where each automation gets the right to act</a> · O.H. opens each root on this Mac</small></p>`;
  vp.after(list);
  let sel=-1;
  function place(el,px,py){const gw=glass.clientWidth,gh=glass.clientHeight,w=el.offsetWidth,h=el.offsetHeight;el.style.left=Math.max(6,Math.min(gw-w-6,px-w/2))+'px';el.style.top=Math.max(6,Math.min(gh-h-6,py+14))+'px';}
